@@ -304,8 +304,6 @@ coords = read.table('./data/DCC-filtered-data.csv', sep=',', header = TRUE)
 
 Before we can analyze the data, we need to identify the appropriate parameters for continuous CRQA for the dataset. We identify parameters that provide a steady *rate of recurrence* or *RR* of 5% for each conversation of each dyad and save these parameters to a CSV file.
 
-**NOTE TO SELF**: Uncomment the source file before releasing.
-
 ```{r crqa-parameters, eval=FALSE}
 
 # run CRQA parameters
