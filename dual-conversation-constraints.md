@@ -1,3 +1,5 @@
+# High- and Low-Level Constraints on Coordination during Conversation: Data Analysis for Paxton & Dale (in preparation)
+
 This R markdown provides the basis for our manuscript, "Interpersonal movement coordination responds to high- and low-level conversational constraints" (Paxton & Dale, in preparation). The study explorse how high-level (i.e., conversational context) and low-level (i.e., visual stimuli) constraints affect interpersonal coordination during conversation. We quantify coordination using amplitude of movement from head-mounted accelerometers (using Google Glass; see Paxton, Rodriguez, & Dale, 2015, *Behavior Research Methods*).
 
 To run these analyses from scratch, you will need the following files:
@@ -244,8 +246,6 @@ Identify CRQA parameters
 ------------------------
 
 Before we can analyze the data, we need to identify the appropriate parameters for continuous CRQA for the dataset. We identify parameters that provide a steady *rate of recurrence* or *RR* of 5% for each conversation of each dyad and save these parameters to a CSV file.
-
-**NOTE TO SELF**: Uncomment the source file before releasing.
 
 ``` r
 # run CRQA parameters
