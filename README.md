@@ -1,5 +1,4 @@
-# High- and Low-Level Constraints on Coordination during Conversation:
-<br> # Data Analysis for Paxton & Dale (in preparation)
+# High- and Low-Level Constraints on Coordination during Conversation: Data Analysis for Paxton & Dale (in preparation)
 
 This repo contains the code for the analyses presented in our manuscript, "Interpersonal movement coordination responds to high- and low-level conversational constraints" (Paxton & Dale, in preparation).
 
