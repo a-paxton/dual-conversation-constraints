@@ -1,7 +1,7 @@
 # High- and Low-Level Constraints on Coordination during Conversation
-## Data Analysis for Paxton & Dale (in preparation)
+## Data Analysis for Paxton & Dale (under review)
 
-This repo contains the code for the analyses presented in our manuscript, "Interpersonal movement coordination responds to high- and low-level conversational constraints" (Paxton & Dale, in preparation).
+This repo contains the code for the analyses presented in our manuscript, "Interpersonal movement synchrony responds to high- and low-level conversational constraints" (Paxton & Dale, under review).
 
 ## Overview
 
@@ -13,6 +13,9 @@ The repo contains several analysis files, an R markdown, and a markdown file.
 * `./supplementary-code/continuous_rqa_parameters-DCC.r`: Identifies the appropriate parameters for continuous cross-recurrence quantification analysis (CRQA).
 * `./supplementary-code/unify_participant_samples-DCC.r`: Merges all individual participant data files produced by [PsyGlass](https://github.com/a-paxton/psyglass) into a single file, `./data/prepped_data-DCC.csv`.
 
+## Related materials
+
+Data for the project can be found at our OSF repository: https://osf.io/x9ay6/
 
 ## Notes on running and viewing
 
