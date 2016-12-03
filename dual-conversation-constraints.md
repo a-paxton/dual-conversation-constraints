@@ -1,16 +1,16 @@
-# High- and Low-Level Constraints on Coordination during Conversation: Data Analysis for Paxton & Dale (in preparation)
+# High- and Low-Level Constraints on Coordination during Conversation: Code for Paxton & Dale (under review)
 
-This R markdown provides the basis for our manuscript, "Interpersonal movement coordination responds to high- and low-level conversational constraints" (Paxton & Dale, in preparation). The study explorse how high-level (i.e., conversational context) and low-level (i.e., visual stimuli) constraints affect interpersonal coordination during conversation. We quantify coordination using amplitude of movement from head-mounted accelerometers (using Google Glass; see Paxton, Rodriguez, & Dale, 2015, *Behavior Research Methods*).
+This R markdown provides the basis for our manuscript, "Interpersonal movement synchrony responds to high- and low-level conversational constraints" (Paxton & Dale, under review). The study explorse how high-level (i.e., conversational context) and low-level (i.e., visual stimuli) constraints affect interpersonal coordination during conversation. We quantify coordination using amplitude of movement from head-mounted accelerometers (using Google Glass; see Paxton, Rodriguez, & Dale, 2015, *Behavior Research Methods*).
 
 To run these analyses from scratch, you will need the following files:
 
--   `./data/prepped_data-DCC.csv`: Contains experimental data.
+-   `./data/prepped_data-DCC.csv`: Contains experimental data. All data for included dyads are freely available in the OSF repository for the project: `https://osf.io/x9ay6/`.
 -   `./supplementary-code/libraries_and_functions-DCC.r`: Loads in necessary libraries and creates new functions for our analyses.
 -   `./supplementary-code/continuous_rqa_parameters-DCC.r`: Identifies the appropriate parameters for continuous cross-recurrence quantification analysis (CRQA).
 
-Additional files will be created during the initial run that will help reduce processing time.
+Additional files will be created during the initial run that will help reduce processing time. Several of these files--including the chosen CRQA parameters, the final plotting dataframe, and the final analysis dataframe---are available as CSVs from the OSF repository listed above.
 
-**Written by**: A. Paxton (University of California, Berkeley) and R. Dale (University of California, Merced) <br>**Date last modified**: 3 October 2016
+**Written by**: A. Paxton (University of California, Berkeley) and R. Dale (University of California, Merced) <br>**Date last modified**: 3 December 2016
 
 ------------------------------------------------------------------------
 
@@ -246,6 +246,8 @@ Identify CRQA parameters
 ------------------------
 
 Before we can analyze the data, we need to identify the appropriate parameters for continuous CRQA for the dataset. We identify parameters that provide a steady *rate of recurrence* or *RR* of 5% for each conversation of each dyad and save these parameters to a CSV file.
+
+**NOTE TO SELF**: Uncomment the source file before releasing.
 
 ``` r
 # run CRQA parameters
@@ -532,7 +534,6 @@ rec_convers_condition_gca_st = lmer(rr ~ convers + condition + ot1 + ot2 +
                                       condition.convers + ot1.ot2 +
                                       convers.ot1 + condition.ot1 + condition.convers.ot1 +
                                       convers.ot2 + condition.ot2 + condition.convers.ot2 +
-                                      convers.ot1 + condition.ot1 + condition.convers.ot1 +
                                       convers.ot1.ot2 + condition.ot1.ot2 + condition.convers.ot1.ot2 +
                                       (1 + ot1 + ot2 + convers + condition.convers.ot1 | conv.num) + 
                                       (1 + ot1 + ot2 + convers + condition.convers.ot1 | dyad), 
@@ -563,13 +564,12 @@ pander_lme(rec_convers_condition_gca_st,stats.caption = TRUE)
 ``` r
 # raw model
 rec_convers_condition_gca_raw = lmer(rr ~ convers + condition + ot1 + ot2 +
-                                      condition.convers + ot1.ot2 +
-                                      convers.ot1 + condition.ot1 + condition.convers.ot1 +
-                                      convers.ot2 + condition.ot2 + condition.convers.ot2 +
-                                      convers.ot1 + condition.ot1 + condition.convers.ot1 +
-                                      convers.ot1.ot2 + condition.ot1.ot2 + condition.convers.ot1.ot2 +
-                                      (1 + ot1 + ot2 + convers + condition.convers.ot1 | conv.num) + 
-                                      (1 + ot1 + ot2 + convers + condition.convers.ot1 | dyad), 
+                                       condition.convers + ot1.ot2 +
+                                       convers.ot1 + condition.ot1 + condition.convers.ot1 +
+                                       convers.ot2 + condition.ot2 + condition.convers.ot2 +
+                                       convers.ot1.ot2 + condition.ot1.ot2 + condition.convers.ot1.ot2 +
+                                       (1 + ot1 + ot2 + convers + condition.convers.ot1 | conv.num) + 
+                                       (1 + ot1 + ot2 + convers + condition.convers.ot1 | dyad), 
                                      data=rec_plot,REML=FALSE)
 pander_lme(rec_convers_condition_gca_raw,stats.caption = TRUE)
 ```
@@ -593,14 +593,152 @@ pander_lme(rec_convers_condition_gca_raw,stats.caption = TRUE)
 |     **condition.ot1.ot2**     |   0.1024  |   0.03317  |  3.088  | 0.002 |  \*\*  |
 | **condition.convers.ot1.ot2** |   0.4324  |   0.06634  |  6.518  |   0   | \*\*\* |
 
-The model's results indeed suggest that high- and low-level constraints influence coordination dynamics. We again saw that participants tend to be coordinated overall, although with a slight leading/following pattern (`ot.ot2`). Extending previous findings with gross body movements in another naturalistic interaction corpus (Paxton & Dale, 2013, *Quarterly Journal of Experimental Psychology*), we here found that argument decreases interpersonal synchrony (`convers`). Conversation type also influenced the dynamics of coordination: Recurrence during the affiliative conversations was higher but more diffuse, while recurrence in the argumentative conversation was lower but more peaked (`convers.ot1.ot2`; trend for `convers.ot2`).
+------------------------------------------------------------------------
 
-Interestingly, although we hypothesized that the noise condition would increase coordination compared to a dual-task condition, we did not find a simple effect of condition (`condition`). Instead, condition affected the dynamics of coordination. Participants in the dual-task condition appeared to show a more iconic quadratic pattern (more greater temporal coupling) than those in the noise condition (`condition.ot1.ot2`).
+Exploring interaction terms
+---------------------------
 
-We also found a complex, four-way interaction among predictors (`condition.convers.ot1.ot2`). Briefly, it appears that some of the major differences are being carried by (1) the difference between the argumentative conversation in the dual-task versus noise condition and (2) the relatively diffuse coordination of the affiliative conversation in the dual-task condition.
+Let's do some investigations into the significant four-way interaction. After inspecting the interaction plot (see Discussion section), we choose to divide the data by conversation type -- exploring whether we still see significant differences in synchrony by task condition when we examine the conversations separately.
+
+------------------------------------------------------------------------
+
+### Prepare separate datasets for each conversation
+
+We create raw and standardized datasets for each conversation type here.
+
+``` r
+# select only the friendly conversations (convers = -.5)
+aff_only_raw = rec_plot %>%
+  filter(convers < 0)
+
+# restandardize friendly conversation data
+aff_only_st = aff_only_raw %>%
+  mutate_each(.,funs(as.numeric(scale(.)))) %>%
+  mutate(convers = -.5)
+
+# select only the arguments (convers = .5)
+arg_only_raw = rec_plot %>%
+  filter(convers > 0)
+
+# restandardize argument data
+arg_only_st = arg_only_raw %>%
+  mutate_each(.,funs(as.numeric(scale(.)))) %>%
+  mutate(convers = .5)
+```
+
+------------------------------------------------------------------------
+
+### Post-hoc interaction tests
+
+Do we still see significant differences by condition in each conversation?
+
+``` r
+# check for differences in the friendly conversation (raw)
+cond_aff_gca_raw = lmer(rr ~ condition + 
+                      ot1 + ot2 + ot1.ot2 +
+                      condition.ot1 + condition.ot2 + condition.ot1.ot2 +
+                      (1 + ot1 + ot2 + condition | conv.num) + 
+                      (1 + ot1 + ot2 + condition | dyad), 
+                    data=aff_only_raw,REML=FALSE)
+pander_lme(cond_aff_gca_raw, stats.caption=TRUE)
+```
+
+|                       |  Estimate | Std..Error | t.value |   p   |   sig  |
+|:---------------------:|:---------:|:----------:|:-------:|:-----:|:------:|
+|    **(Intercept)**    |  0.05566  |  0.004019  |  13.85  |   0   | \*\*\* |
+|     **condition**     |  0.001413 |  0.008038  |  0.1758 |  0.86 |        |
+|        **ot1**        | -0.007443 |   0.02023  |  -0.368 |  0.71 |        |
+|        **ot2**        |  -0.02218 |   0.02033  |  -1.091 |  0.28 |        |
+|      **ot1.ot2**      |  -0.0603  |   0.0224   |  -2.692 | 0.007 |  \*\*  |
+|   **condition.ot1**   |  0.01605  |   0.04045  |  0.3968 |  0.69 |        |
+|   **condition.ot2**   |  0.00985  |   0.04066  |  0.2422 |  0.81 |        |
+| **condition.ot1.ot2** |  -0.1138  |   0.0448   |  -2.54  | 0.011 |   \*   |
+
+``` r
+# check for differences in the friendly conversation (standardized)
+cond_aff_gca_st = lmer(rr ~ condition + 
+                      ot1 + ot2 + ot1.ot2 +
+                      condition.ot1 + condition.ot2 + condition.ot1.ot2 +
+                      (1 + ot1 + ot2 + condition | conv.num) + 
+                      (1 + ot1 + ot2 + condition | dyad), 
+                    data=aff_only_st,REML=FALSE)
+pander_lme(cond_aff_gca_st, stats.caption=TRUE)
+```
+
+|                       |    Estimate    | Std..Error |    t.value   |   p   |  sig |
+|:---------------------:|:--------------:|:----------:|:------------:|:-----:|:----:|
+|    **(Intercept)**    | -0.00000006682 |   0.1763   | -0.000000379 |   1   |      |
+|     **condition**     |     0.02885    |   0.1642   |    0.1758    |  0.86 |      |
+|        **ot1**        |    -0.03056    |   0.08305  |    -0.368    |  0.71 |      |
+|        **ot2**        |    -0.09109    |   0.08348  |    -1.091    |  0.28 |      |
+|      **ot1.ot2**      |    -0.03087    |   0.01147  |    -2.692    | 0.007 | \*\* |
+|   **condition.ot1**   |     0.03296    |   0.08305  |    0.3968    |  0.69 |      |
+|   **condition.ot2**   |     0.02022    |   0.08348  |    0.2422    |  0.81 |      |
+| **condition.ot1.ot2** |    -0.02913    |   0.01147  |     -2.54    | 0.011 |  \*  |
+
+``` r
+# check for differences in the argumentative conversation (raw)
+cond_arg_gca_raw = lmer(rr ~ condition + 
+                      ot1 + ot2 + ot1.ot2 +
+                      condition.ot1 + condition.ot2 + condition.ot1.ot2 +
+                      (1 + ot1 + ot2 + condition | conv.num) + 
+                      (1 + ot1 + ot2 + condition | dyad), 
+                    data=arg_only_raw,REML=FALSE)
+pander_lme(cond_arg_gca_raw, stats.caption=TRUE)
+```
+
+|                       | Estimate | Std..Error | t.value |   p   |   sig  |
+|:---------------------:|:--------:|:----------:|:-------:|:-----:|:------:|
+|    **(Intercept)**    |  0.03608 |  0.006248  |  5.775  |   0   | \*\*\* |
+|     **condition**     |  0.00775 |   0.01147  |  0.6759 |  0.5  |        |
+|        **ot1**        | -0.02112 |   0.01179  |  -1.792 | 0.073 |    .   |
+|        **ot2**        | -0.02037 |  0.009588  |  -2.124 | 0.034 |   \*   |
+|      **ot1.ot2**      |   0.126  |   0.01841  |  6.843  |   0   | \*\*\* |
+|   **condition.ot1**   | -0.03231 |   0.02244  |  -1.44  |  0.15 |        |
+|   **condition.ot2**   | 0.007293 |   0.01826  |  0.3993 |  0.69 |        |
+| **condition.ot1.ot2** |  0.3186  |   0.03683  |  8.652  |   0   | \*\*\* |
+
+``` r
+# check for differences in the argumentative conversation (standardized)
+cond_arg_gca_st = lmer(rr ~ condition + 
+                      ot1 + ot2 + ot1.ot2 +
+                      condition.ot1 + condition.ot2 + condition.ot1.ot2 +
+                      (1 + ot1 + ot2 + condition.ot1.ot2 | conv.num) + 
+                      (1 + ot1 + ot2 + condition.ot1.ot2 | dyad), 
+                    data=arg_only_st,REML=FALSE)
+pander_lme(cond_arg_gca_st, stats.caption=TRUE)
+```
+
+|                       |     Estimate     | Std..Error |     t.value    |   p   | sig |
+|:---------------------:|:----------------:|:----------:|:--------------:|:-----:|:---:|
+|    **(Intercept)**    | 0.00000000002825 |   0.1948   | 0.000000000145 |   1   |     |
+|     **condition**     |      0.1554      |   0.1948   |     0.7976     |  0.42 |     |
+|        **ot1**        |     -0.08442     |   0.06333  |     -1.333     | 0.183 |     |
+|        **ot2**        |     -0.08705     |   0.03804  |     -2.289     | 0.022 |  \* |
+|      **ot1.ot2**      |      0.06517     |   0.04476  |      1.456     | 0.145 |     |
+|   **condition.ot1**   |     -0.06542     |   0.06333  |     -1.033     |  0.3  |     |
+|   **condition.ot2**   |      0.01384     |   0.03804  |     0.3638     |  0.72 |     |
+| **condition.ot1.ot2** |      0.0824      |   0.04476  |      1.841     | 0.066 |  .  |
+
+------------------------------------------------------------------------
+
+Discussion
+==========
+
+The model's results indeed suggest that high- and low-level constraints influence coordination dynamics. We again saw that participants tend to be coordinated overall, although with a slight leading/following pattern (`ot1.ot2`). Extending previous findings with gross body movements in another naturalistic interaction corpus (Paxton & Dale, 2013, *Quarterly Journal of Experimental Psychology*), we here found that argument decreases interpersonal synchrony (`convers`). Conversation type also influenced the dynamics of coordination: Recurrence during the affiliative conversations was higher but more diffuse, while recurrence in the argumentative conversation was lower but more peaked (`convers.ot1.ot2`; trend for `convers.ot2`).
+
+Interestingly, although we hypothesized that the noise condition would increase coordination compared to a dual-task condition, we did not find a simple effect of condition (`condition`). Instead, condition affected the dynamics of coordination. Participants in the noise condition appeared to show a more iconic quadratic pattern (more greater temporal coupling) than those in the dual-task condition (`condition.ot1.ot2`), although the dual-task condition's coupling was more peaked around lag-0.
+
+We also found a complex, four-way interaction among predictors (`condition.convers.ot1.ot2`). In our separate follow-up analyses of each conversation type, movement remained significantly coordinated (`ot1.ot2`), and the three-way interaction among condition, LL, and QL (`condition.ot1.ot2`) were also still significant. However, we did not see a main effect of condition, reinforcing the idea that condition is influencing the dynamics or *unfolding* of the coordination.
 
 Taken together, we view our results as consistent with the growing view of interpersonal communication as a complex dynamical system.
 
+------------------------------------------------------------------------
+
 ![**Figure**. Effects of conversation type (affiliative/argumentative), condition (dual-task/noise), and lag (±5 seconds at 10 Hz) on RR.](./figures/DCC-interaction-RR_lag_conversation_condition-knitr.png)
+
+------------------------------------------------------------------------
+
+![**Figure**. Individual profiles for each dyad's RR by conversation type (affiliative/argumentative), condition (dual-task/noise), and lag (±5 seconds at 10 Hz).](./figures/DCC-all_dyad_profiles-knitr.png)
 
 ------------------------------------------------------------------------

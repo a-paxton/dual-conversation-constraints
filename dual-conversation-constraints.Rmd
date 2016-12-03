@@ -1,20 +1,20 @@
 ---
-title: "High- and Low-Level Constraints on Coordination during Conversation: Data Analysis for Paxton & Dale (in preparation)"
+title: "High- and Low-Level Constraints on Coordination during Conversation: Code for Paxton & Dale (under review)"
 output: html_document
 ---
 
-This R markdown provides the basis for our manuscript, "Interpersonal movement coordination responds to high- and low-level conversational constraints" (Paxton & Dale, in preparation). The study explorse how high-level (i.e., conversational context) and low-level (i.e., visual stimuli) constraints affect interpersonal coordination during conversation. We quantify coordination using amplitude of movement from head-mounted accelerometers (using Google Glass; see Paxton, Rodriguez, & Dale, 2015, *Behavior Research Methods*).
+This R markdown provides the basis for our manuscript, "Interpersonal movement synchrony responds to high- and low-level conversational constraints" (Paxton & Dale, under review). The study explorse how high-level (i.e., conversational context) and low-level (i.e., visual stimuli) constraints affect interpersonal coordination during conversation. We quantify coordination using amplitude of movement from head-mounted accelerometers (using Google Glass; see Paxton, Rodriguez, & Dale, 2015, *Behavior Research Methods*).
 
 To run these analyses from scratch, you will need the following files:
 
-* `./data/prepped_data-DCC.csv`: Contains experimental data.
+* `./data/prepped_data-DCC.csv`: Contains experimental data. All data for included dyads are freely available in the OSF repository for the project: `https://osf.io/x9ay6/`.
 * `./supplementary-code/libraries_and_functions-DCC.r`: Loads in necessary libraries and creates new functions for our analyses.
 * `./supplementary-code/continuous_rqa_parameters-DCC.r`: Identifies the appropriate parameters for continuous cross-recurrence quantification analysis (CRQA).
 
-Additional files will be created during the initial run that will help reduce processing time.
+Additional files will be created during the initial run that will help reduce processing time. Several of these files--including the chosen CRQA parameters, the final plotting dataframe, and the final analysis dataframe---are available as CSVs from the OSF repository listed above.
 
 **Written by**: A. Paxton (University of California, Berkeley) and R. Dale (University of California, Merced)
-<br>**Date last modified**: 3 October 2016
+<br>**Date last modified**: 3 December 2016
 
 ***
 
@@ -303,6 +303,8 @@ coords = read.table('./data/DCC-filtered-data.csv', sep=',', header = TRUE)
 ## Identify CRQA parameters
 
 Before we can analyze the data, we need to identify the appropriate parameters for continuous CRQA for the dataset. We identify parameters that provide a steady *rate of recurrence* or *RR* of 5% for each conversation of each dyad and save these parameters to a CSV file.
+
+**NOTE TO SELF**: Uncomment the source file before releasing.
 
 ```{r crqa-parameters, eval=FALSE}
 
@@ -599,7 +601,6 @@ rec_convers_condition_gca_st = lmer(rr ~ convers + condition + ot1 + ot2 +
                                       condition.convers + ot1.ot2 +
                                       convers.ot1 + condition.ot1 + condition.convers.ot1 +
                                       convers.ot2 + condition.ot2 + condition.convers.ot2 +
-                                      convers.ot1 + condition.ot1 + condition.convers.ot1 +
                                       convers.ot1.ot2 + condition.ot1.ot2 + condition.convers.ot1.ot2 +
                                       (1 + ot1 + ot2 + convers + condition.convers.ot1 | conv.num) + 
                                       (1 + ot1 + ot2 + convers + condition.convers.ot1 | dyad), 
@@ -609,32 +610,121 @@ pander_lme(rec_convers_condition_gca_st,stats.caption = TRUE)
 
 # raw model
 rec_convers_condition_gca_raw = lmer(rr ~ convers + condition + ot1 + ot2 +
-                                      condition.convers + ot1.ot2 +
-                                      convers.ot1 + condition.ot1 + condition.convers.ot1 +
-                                      convers.ot2 + condition.ot2 + condition.convers.ot2 +
-                                      convers.ot1 + condition.ot1 + condition.convers.ot1 +
-                                      convers.ot1.ot2 + condition.ot1.ot2 + condition.convers.ot1.ot2 +
-                                      (1 + ot1 + ot2 + convers + condition.convers.ot1 | conv.num) + 
-                                      (1 + ot1 + ot2 + convers + condition.convers.ot1 | dyad), 
+                                       condition.convers + ot1.ot2 +
+                                       convers.ot1 + condition.ot1 + condition.convers.ot1 +
+                                       convers.ot2 + condition.ot2 + condition.convers.ot2 +
+                                       convers.ot1.ot2 + condition.ot1.ot2 + condition.convers.ot1.ot2 +
+                                       (1 + ot1 + ot2 + convers + condition.convers.ot1 | conv.num) + 
+                                       (1 + ot1 + ot2 + convers + condition.convers.ot1 | dyad), 
                                      data=rec_plot,REML=FALSE)
 pander_lme(rec_convers_condition_gca_raw,stats.caption = TRUE)
 
 ```
 
-The model's results indeed suggest that high- and low-level constraints influence coordination dynamics. We again saw that participants tend to be coordinated overall, although with a slight leading/following pattern (`ot.ot2`). Extending previous findings with gross body movements in another naturalistic interaction corpus (Paxton & Dale, 2013, *Quarterly Journal of Experimental Psychology*), we here found that argument decreases interpersonal synchrony (`convers`). Conversation type also influenced the dynamics of coordination: Recurrence during the affiliative conversations was higher but more diffuse, while recurrence in the argumentative conversation was lower but more peaked (`convers.ot1.ot2`; trend for `convers.ot2`).
+***
 
-Interestingly, although we hypothesized that the noise condition would increase coordination compared to a dual-task condition, we did not find a simple effect of condition (`condition`). Instead, condition affected the dynamics of coordination. Participants in the dual-task condition appeared to show a more iconic quadratic pattern (more greater temporal coupling) than those in the noise condition (`condition.ot1.ot2`). 
+## Exploring interaction terms
 
-We also found a complex, four-way interaction among predictors (`condition.convers.ot1.ot2`). Briefly, it appears that some of the major differences are being carried by (1) the difference between the argumentative conversation in the dual-task versus noise condition and (2) the relatively diffuse coordination of the affiliative conversation in the dual-task condition.
+Let's do some investigations into the significant four-way interaction. After inspecting the interaction plot (see Discussion section), we choose to divide the data by conversation type -- exploring whether we still see significant differences in synchrony by task condition when we examine the conversations separately.
+
+***
+
+### Prepare separate datasets for each conversation
+
+We create raw and standardized datasets for each conversation type here.
+
+```{r prep-post-hoc-data}
+
+# select only the friendly conversations (convers = -.5)
+aff_only_raw = rec_plot %>%
+  filter(convers < 0)
+
+# restandardize friendly conversation data
+aff_only_st = aff_only_raw %>%
+  mutate_each(.,funs(as.numeric(scale(.)))) %>%
+  mutate(convers = -.5)
+
+# select only the arguments (convers = .5)
+arg_only_raw = rec_plot %>%
+  filter(convers > 0)
+
+# restandardize argument data
+arg_only_st = arg_only_raw %>%
+  mutate_each(.,funs(as.numeric(scale(.)))) %>%
+  mutate(convers = .5)
+
+```
+
+***
+
+### Post-hoc interaction tests
+
+Do we still see significant differences by condition in each conversation?
+
+```{r aff-post-hoc-test}
+
+# check for differences in the friendly conversation (raw)
+cond_aff_gca_raw = lmer(rr ~ condition + 
+                      ot1 + ot2 + ot1.ot2 +
+                      condition.ot1 + condition.ot2 + condition.ot1.ot2 +
+                      (1 + ot1 + ot2 + condition | conv.num) + 
+                      (1 + ot1 + ot2 + condition | dyad), 
+                    data=aff_only_raw,REML=FALSE)
+pander_lme(cond_aff_gca_raw, stats.caption=TRUE)
+
+# check for differences in the friendly conversation (standardized)
+cond_aff_gca_st = lmer(rr ~ condition + 
+                      ot1 + ot2 + ot1.ot2 +
+                      condition.ot1 + condition.ot2 + condition.ot1.ot2 +
+                      (1 + ot1 + ot2 + condition | conv.num) + 
+                      (1 + ot1 + ot2 + condition | dyad), 
+                    data=aff_only_st,REML=FALSE)
+pander_lme(cond_aff_gca_st, stats.caption=TRUE)
+
+```
+
+```{r arg-post-hoc-test}
+
+# check for differences in the argumentative conversation (raw)
+cond_arg_gca_raw = lmer(rr ~ condition + 
+                      ot1 + ot2 + ot1.ot2 +
+                      condition.ot1 + condition.ot2 + condition.ot1.ot2 +
+                      (1 + ot1 + ot2 + condition | conv.num) + 
+                      (1 + ot1 + ot2 + condition | dyad), 
+                    data=arg_only_raw,REML=FALSE)
+pander_lme(cond_arg_gca_raw, stats.caption=TRUE)
+
+# check for differences in the argumentative conversation (standardized)
+cond_arg_gca_st = lmer(rr ~ condition + 
+                      ot1 + ot2 + ot1.ot2 +
+                      condition.ot1 + condition.ot2 + condition.ot1.ot2 +
+                      (1 + ot1 + ot2 + condition.ot1.ot2 | conv.num) + 
+                      (1 + ot1 + ot2 + condition.ot1.ot2 | dyad), 
+                    data=arg_only_st,REML=FALSE)
+pander_lme(cond_arg_gca_st, stats.caption=TRUE)
+
+```
+
+***
+
+# Discussion
+
+The model's results indeed suggest that high- and low-level constraints influence coordination dynamics. We again saw that participants tend to be coordinated overall, although with a slight leading/following pattern (`ot1.ot2`). Extending previous findings with gross body movements in another naturalistic interaction corpus (Paxton & Dale, 2013, *Quarterly Journal of Experimental Psychology*), we here found that argument decreases interpersonal synchrony (`convers`). Conversation type also influenced the dynamics of coordination: Recurrence during the affiliative conversations was higher but more diffuse, while recurrence in the argumentative conversation was lower but more peaked (`convers.ot1.ot2`; trend for `convers.ot2`).
+
+Interestingly, although we hypothesized that the noise condition would increase coordination compared to a dual-task condition, we did not find a simple effect of condition (`condition`). Instead, condition affected the dynamics of coordination. Participants in the noise condition appeared to show a more iconic quadratic pattern (more greater temporal coupling) than those in the dual-task condition (`condition.ot1.ot2`), although the dual-task condition's coupling was more peaked around lag-0. 
+
+We also found a complex, four-way interaction among predictors (`condition.convers.ot1.ot2`).  In our separate follow-up analyses of each conversation type, movement remained significantly coordinated (`ot1.ot2`), and the three-way interaction among condition, LL, and QL (`condition.ot1.ot2`) were also still significant. However, we did not see a main effect of condition, reinforcing the idea that condition is influencing the dynamics or *unfolding* of the coordination.
 
 Taken together, we view our results as consistent with the growing view of interpersonal communication as a complex dynamical system. 
+
+***
 
 ```{r plot-three-way-interaction, eval=FALSE, echo=FALSE}
 
 # split plotting dataframe by condition
 condition_dfs = split(rec_plot,rec_plot$condition)
-dual_task_data = condition_dfs[[1]]
-noise_data = condition_dfs[[2]]
+noise_data = condition_dfs[[1]]
+dual_task_data = condition_dfs[[2]]
 
 # plot dual-task condition
 dual_task_plot = ggplot(dual_task_data,
@@ -687,7 +777,7 @@ master_legend = gtable_filter(ggplot_gtable(
 ggsave('./figures/DCC-interaction-RR_lag_conversation_condition.png',
        units = "in", width = 4, height = 5,
        grid.arrange(
-         top=textGrob("Head movement coordination\nby task and conversation",
+         top=textGrob("Head movement synchrony\nby task and conversation",
                       gp=gpar(fontsize=14)),
          dual_task_plot,
          noise_plot,
@@ -699,7 +789,7 @@ ggsave('./figures/DCC-interaction-RR_lag_conversation_condition.png',
 ggsave('./figures/DCC-interaction-RR_lag_conversation_condition-knitr.png',
        units = "in", width = 4, height = 5, dpi=100,
        grid.arrange(
-         top=textGrob("Head movement coordination\nby task and conversation",
+         top=textGrob("Head movement synchrony\nby task and conversation",
                       gp=gpar(fontsize=14)),
          dual_task_plot,
          noise_plot,
@@ -712,3 +802,107 @@ ggsave('./figures/DCC-interaction-RR_lag_conversation_condition-knitr.png',
 ![**Figure**. Effects of conversation type (affiliative/argumentative), condition (dual-task/noise), and lag (±5 seconds at 10 Hz) on RR.](./figures/DCC-interaction-RR_lag_conversation_condition-knitr.png)
 
 *** 
+
+```{r plot-all-drps, eval=FALSE, echo=FALSE}
+
+# split plotting dataframe by condition
+condition_dfs = split(rec_plot,rec_plot$condition)
+noise_data = condition_dfs[[1]]
+dual_task_data = condition_dfs[[2]]
+
+# reorder dyads by rr at lag-0 in affiliative conversation
+dual_task_data$sorted_dyad = with(dual_task_data, 
+                                  reorder(dyad, 
+                                          rr[ifelse(lag == 0, TRUE, NA) &
+                                               ifelse(convers > 0, TRUE, NA)],
+                                          mean, na.rm = TRUE))
+noise_data$sorted_dyad = with(noise_data, 
+                              reorder(dyad, 
+                                      rr[ifelse(lag == 0, TRUE, NA) &
+                                           ifelse(convers > 0, TRUE, NA)],
+                                      mean, na.rm = TRUE))
+
+# plot for noise condition
+noise_plot = ggplot(data = noise_data, aes(x = lag, y = rr, 
+                              color=as.factor(convers))) + 
+  facet_wrap(~sorted_dyad) + geom_smooth() + geom_line() +
+  scale_colour_manual(values=c("chartreuse4","red2"),
+                      breaks=c(min(c(noise_data$convers,
+                                     dual_task_data$convers)),
+                               max(c(noise_data$convers,
+                                     dual_task_data$convers)))) +
+  ylim(c(min(c(noise_data$rr,dual_task_data$rr)) - .01),
+         max(c(noise_data$rr,dual_task_data$rr)) + .01) +
+  theme(legend.position = "none",
+        strip.background = element_blank(),
+        strip.text.x = element_blank()) +
+  ggtitle('Noise Condition') +
+  ylab(' ') + xlab('Lag (10Hz)')
+  stat_smooth()
+  
+# plot for dual-task condition
+dual_task_plot = ggplot(data = dual_task_data, aes(x = lag, y = rr, 
+                                  color=as.factor(convers))) + 
+  facet_wrap(~sorted_dyad) + geom_smooth() + geom_line() +
+  scale_colour_manual(values=c("chartreuse4","red2"),
+                      breaks=c(min(c(noise_data$convers,
+                                     dual_task_data$convers)),
+                               max(c(noise_data$convers,
+                                     dual_task_data$convers)))) +
+  ylim(c(min(c(noise_data$rr,dual_task_data$rr)) - .01),
+         max(c(noise_data$rr,dual_task_data$rr)) + .01) +
+  theme(legend.position = "none",
+        strip.background = element_blank(),
+        strip.text.x = element_blank()) +
+  ggtitle('Dual-Task Condition') +
+  ylab('RR (mean)') + xlab('Lag (10Hz)')
+  stat_smooth()
+
+# create another noise plot just for the legend
+noise_plot_legend = ggplot(noise_data,
+                           aes(x=lag,
+                               y=rr,
+                               color=as.factor(convers))) +
+  scale_colour_manual(values=c("chartreuse4","red2"),
+                      name='Conversation Type',
+                      breaks=c(min(noise_data$convers),
+                               max((noise_data$convers))),
+                      labels=c("Affiliative","Argumentative")) +
+  ggtitle('Noise') +
+  stat_smooth() +
+  coord_cartesian(ylim=c(.02,.07))
+
+# create a master legend
+master_legend = gtable_filter(ggplot_gtable(
+  ggplot_build(noise_plot_legend + theme(legend.position="bottom"))), 
+  "guide-box")
+
+# save to file for manuscript submission
+ggsave('./figures/DCC-all_dyad_profiles.png',
+       units = "in", width = 8, height = 5,
+       grid.arrange(
+         top=textGrob("Individual dyad profiles of\nhead movement synchrony",
+                      gp=gpar(fontsize=14)),
+         dual_task_plot,
+         noise_plot,
+         bottom=master_legend,
+         ncol = 2
+       ))
+
+# save smaller version for knitr
+ggsave('./figures/DCC-all_dyad_profiles-knitr.png',
+       units = "in", width = 8, height = 5, dpi=100,
+       grid.arrange(
+         top=textGrob("Individual dyad profiles of\nhead movement synchrony",
+                      gp=gpar(fontsize=14)),
+         dual_task_plot,
+         noise_plot,
+         bottom=master_legend,
+         ncol = 2
+       ))
+
+```
+
+![**Figure**. Individual profiles for each dyad's RR by conversation type (affiliative/argumentative), condition (dual-task/noise), and lag (±5 seconds at 10 Hz).](./figures/DCC-all_dyad_profiles-knitr.png)
+
+***
