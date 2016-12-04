@@ -1,7 +1,6 @@
-
 # High- and Low-Level Constraints on Coordination during Conversation: Code for Paxton & Dale (under review)
 
-This R markdown provides the basis for our manuscript, "Interpersonal movement coordination responds to high- and low-level conversational constraints" (Paxton & Dale, under review). The study explores how high-level (i.e., conversational context) and low-level (i.e., visual stimuli) constraints affect interpersonal coordination during conversation. We quantify coordination using amplitude of movement from head-mounted accelerometers (using Google Glass; see Paxton, Rodriguez, & Dale, 2015, *Behavior Research Methods*).
+This R markdown provides the basis for our manuscript, "Interpersonal movement synchrony responds to high- and low-level conversational constraints" (Paxton & Dale, under review). The study explores how high-level (i.e., conversational context) and low-level (i.e., visual stimuli) constraints affect interpersonal coordination during conversation. We quantify coordination using amplitude of movement from head-mounted accelerometers (using Google Glass; see Paxton, Rodriguez, & Dale, 2015, *Behavior Research Methods*).
 
 To run these analyses from scratch, you will need the following files:
 
@@ -704,22 +703,22 @@ pander_lme(cond_arg_gca_raw, stats.caption=TRUE)
 cond_arg_gca_st = lmer(rr ~ condition + 
                       ot1 + ot2 + ot1.ot2 +
                       condition.ot1 + condition.ot2 + condition.ot1.ot2 +
-                      (1 + ot1 + ot2 + condition.ot1.ot2 | conv.num) + 
-                      (1 + ot1 + ot2 + condition.ot1.ot2 | dyad), 
+                      (1 + ot1 + ot2 + condition | conv.num) + 
+                      (1 + ot1 + ot2 + condition | dyad), 
                     data=arg_only_st,REML=FALSE)
 pander_lme(cond_arg_gca_st, stats.caption=TRUE)
 ```
 
-|                       |     Estimate     | Std..Error |     t.value    |   p   | sig |
-|:---------------------:|:----------------:|:----------:|:--------------:|:-----:|:---:|
-|    **(Intercept)**    | 0.00000000002825 |   0.1948   | 0.000000000145 |   1   |     |
-|     **condition**     |      0.1554      |   0.1948   |     0.7976     |  0.42 |     |
-|        **ot1**        |     -0.08442     |   0.06333  |     -1.333     | 0.183 |     |
-|        **ot2**        |     -0.08705     |   0.03804  |     -2.289     | 0.022 |  \* |
-|      **ot1.ot2**      |      0.06517     |   0.04476  |      1.456     | 0.145 |     |
-|   **condition.ot1**   |     -0.06542     |   0.06333  |     -1.033     |  0.3  |     |
-|   **condition.ot2**   |      0.01384     |   0.03804  |     0.3638     |  0.72 |     |
-| **condition.ot1.ot2** |      0.0824      |   0.04476  |      1.841     | 0.066 |  .  |
+|                       | Estimate | Std..Error |  t.value |   p   |   sig  |
+|:---------------------:|:--------:|:----------:|:--------:|:-----:|:------:|
+|    **(Intercept)**    | -0.01892 |   0.2476   | -0.07641 |  0.94 |        |
+|     **condition**     |  0.1599  |   0.2365   |  0.6759  |  0.5  |        |
+|        **ot1**        | -0.08761 |   0.0489   |  -1.792  | 0.073 |    .   |
+|        **ot2**        | -0.08448 |   0.03976  |  -2.124  | 0.034 |   \*   |
+|      **ot1.ot2**      |  0.06517 |  0.009523  |   6.843  |   0   | \*\*\* |
+|   **condition.ot1**   | -0.06701 |   0.04654  |   -1.44  |  0.15 |        |
+|   **condition.ot2**   |  0.01512 |   0.03788  |  0.3993  |  0.69 |        |
+| **condition.ot1.ot2** |  0.0824  |  0.009523  |   8.652  |   0   | \*\*\* |
 
 ------------------------------------------------------------------------
 
