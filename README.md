@@ -2,11 +2,6 @@
 ## Data Analysis for Paxton & Dale (under review)
 
 This repo contains the code for the analyses presented in our manuscript, "Interpersonal movement synchrony responds to high- and low-level conversational constraints" (Paxton & Dale, under review).
-=======
-# High- and Low-Level Constraints on Coordination during Conversation: Data Analysis for Paxton & Dale (under review)
-
-This repo contains the code for the analyses presented in our manuscript, "Interpersonal movement coordination responds to high- and low-level conversational constraints" (Paxton & Dale, under review).
->>>>>>> origin/master
 
 ## Overview
 
