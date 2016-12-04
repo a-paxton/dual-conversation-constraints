@@ -1,17 +1,9 @@
 ---
-<<<<<<< HEAD
 title: "High- and Low-Level Constraints on Coordination during Conversation: Code for Paxton & Dale (under review)"
 output: html_document
 ---
 
 This R markdown provides the basis for our manuscript, "Interpersonal movement synchrony responds to high- and low-level conversational constraints" (Paxton & Dale, under review). The study explorse how high-level (i.e., conversational context) and low-level (i.e., visual stimuli) constraints affect interpersonal coordination during conversation. We quantify coordination using amplitude of movement from head-mounted accelerometers (using Google Glass; see Paxton, Rodriguez, & Dale, 2015, *Behavior Research Methods*).
-=======
-title: "High- and Low-Level Constraints on Coordination during Conversation: Data Analysis for Paxton & Dale (under review)"
-output: html_document
----
-
-This R markdown provides the basis for our manuscript, "Interpersonal movement coordination responds to high- and low-level conversational constraints" (Paxton & Dale, under review). The study explores how high-level (i.e., conversational context) and low-level (i.e., visual stimuli) constraints affect interpersonal coordination during conversation. We quantify coordination using amplitude of movement from head-mounted accelerometers (using Google Glass; see Paxton, Rodriguez, & Dale, 2015, *Behavior Research Methods*).
->>>>>>> origin/master
 
 To run these analyses from scratch, you will need the following files:
 
@@ -706,8 +698,8 @@ pander_lme(cond_arg_gca_raw, stats.caption=TRUE)
 cond_arg_gca_st = lmer(rr ~ condition + 
                       ot1 + ot2 + ot1.ot2 +
                       condition.ot1 + condition.ot2 + condition.ot1.ot2 +
-                      (1 + ot1 + ot2 + condition.ot1.ot2 | conv.num) + 
-                      (1 + ot1 + ot2 + condition.ot1.ot2 | dyad), 
+                      (1 + ot1 + ot2 + condition | conv.num) + 
+                      (1 + ot1 + ot2 + condition | dyad), 
                     data=arg_only_st,REML=FALSE)
 pander_lme(cond_arg_gca_st, stats.caption=TRUE)
 
