@@ -1,44 +1,45 @@
 # High- and Low-Level Constraints on Coordination during Conversation: Code for Paxton & Dale (under review)
 
-This R markdown provides the basis for our manuscript, "Interpersonal movement synchrony responds to high- and low-level conversational constraints" (Paxton & Dale, under review). The study explores how high-level (i.e., conversational context) and low-level (i.e., visual stimuli) constraints affect interpersonal coordination during conversation. We quantify coordination using amplitude of movement from head-mounted accelerometers (using Google Glass; see Paxton, Rodriguez, & Dale, 2015, *Behavior Research Methods*).
+This R markdown provides the basis for our manuscript, "Interpersonal movement synchrony responds to high- and low-level conversational constraints" (Paxton & Dale, under review). The study explores how high-level (i.e., conversational context) and low-level (i.e., visual stimuli) constraints affect interpersonal synchrony during conversation. We quantify coordination using amplitude of movement from head-mounted accelerometers (using Google Glass; see Paxton, Rodriguez, & Dale, 2015, *Behavior Research Methods*).
 
 To run these analyses from scratch, you will need the following files:
 
--   `./data/prepped_data-DCC.csv`: Contains experimental data. All data for included dyads are freely available in the OSF repository for the project: `https://osf.io/x9ay6/`.
--   `./supplementary-code/libraries_and_functions-DCC.r`: Loads in necessary libraries and creates new functions for our analyses.
--   `./supplementary-code/continuous_rqa_parameters-DCC.r`: Identifies the appropriate parameters for continuous cross-recurrence quantification analysis (CRQA).
+* `./data/prepped_data-DCC.csv`: Contains experimental data. All data for included dyads are freely available in the OSF repository for the project: `https://osf.io/x9ay6/`.
+* `./supplementary-code/libraries_and_functions-DCC.r`: Loads in necessary libraries and creates new functions for our analyses.
+* `./supplementary-code/continuous_rqa_parameters-DCC.r`: Identifies the appropriate parameters for continuous cross-recurrence quantification analysis (CRQA).
 
 Additional files will be created during the initial run that will help reduce processing time. Several of these files--including the chosen CRQA parameters, the final plotting dataframe, and the final analysis dataframe---are available as CSVs from the OSF repository listed above.
 
-**Written by**: A. Paxton (University of California, Berkeley) and R. Dale (University of California, Merced) <br>**Date last modified**: 3 December 2016
+**Written by**: A. Paxton (University of California, Berkeley) and R. Dale (University of California, Merced)
+<br>**Date last modified**: 13 February 2017
 
-------------------------------------------------------------------------
+***
 
-Data trimming
-=============
+# Data trimming
 
 **NOTE**: The chunks of code in this section do not have to be run each time, since the resulting datasets will be saved to CSV files. As a result, these chunks are currently set to `eval=FALSE`. Bear this in mind if these data need to be re-calculated.
 
-------------------------------------------------------------------------
+***
 
-Preliminaries
--------------
+## Preliminaries
 
 This section reads in participant data, saved in long format (i.e., one line per sample). The columns include:
 
--   `dyad`: identifier for each dyad
--   `partic`: identifier for each participant within each dyad
--   `conv.type`: high-level constraint (within subjects)
-    -   `0` = affiliative conversation
-    -   `1` = argumentative conversation
--   `cond`: low-level constraint (between subjects)
-    -   `0` = noise
-    -   `1` = dual-task
--   `conv.num`: conversation number (2 total for each dyad)
--   `t`: time of sample in seconds
--   `x`, `y`, `z`: accelerometer readings (from head-mounted sensor in Google Glass) at each sample in 3-dimensional plane, relative to head location at initialization
+* `dyad`: identifier for each dyad
+* `partic`: identifier for each participant within each dyad
+* `conv.type`: high-level constraint (within subjects)
+    + `0` = affiliative conversation
+    + `1` = argumentative conversation
+* `cond`: low-level constraint (between subjects)
+    + `0` = noise
+    + `1` = dual-task
+* `conv.num`: conversation number (2 total for each dyad)
+* `t`: time of sample in seconds
+* `x`, `y`, `z`: accelerometer readings (from head-mounted sensor in Google Glass) at each sample in 3-dimensional plane, relative to head location at initialization
 
-``` r
+
+
+```r
 # clear our workspace
 rm(list=ls())
 
@@ -49,14 +50,14 @@ source('./supplementary-code/libraries_and_functions-DCC.r')
 coords = read.table('./data/prepped_data-DCC.csv',sep=',',header = TRUE)
 ```
 
-------------------------------------------------------------------------
+***
 
-Time-align movement data
-------------------------
+## Time-align movement data
 
 Because participants' movement series were sampled separately, we here time-align time series for each dyad.
 
-``` r
+
+```r
 # downsample to 10 Hz and take mean of each axis at new time scale
 coords = coords %>% ungroup() %>%
   mutate(t = round(t, 1)) %>%
@@ -73,14 +74,13 @@ p1 = plyr::rename(p1, c("x" = "x1", "y" = "y1", "z" = "z1"))
 coords = plyr::join(p0, p1, by=c("dyad", "conv.num", "conv.type", "cond", "t"), type="inner")
 ```
 
-------------------------------------------------------------------------
+***
 
-Trim instructions from time series
-----------------------------------
+## Trim instructions from time series
 
-After instructions were given, both participants were instructed to shake their heads repeatedly to indicate the start of the experiment. Here, we identify that head shake by looking for the first bouts of high-velocity movement and trim everything before it.
+After instructions were given, both participants were instructed to shake their heads repeatedly to indicate the start of the experiment.  Here, we identify that head shake by looking for the first bouts of high-velocity movement and trim everything before it.
 
-------------------------------------------------------------------------
+***
 
 ### Calculate Euclidean acceleration and first derivative
 
@@ -88,7 +88,8 @@ These data were collected using an accelerometer. Because this measures the chan
 
 Because participants were instructed to shake their heads to signal the start of the trial, we can identify that by looking at the derivatives of acceleration: jerk (first derivative of acceleration) and jounce (second derivative of acceleration). We calculate each here.
 
-``` r
+
+```r
 # get Euclidean acceleration and derivatives
 coords.deriv = coords %>% ungroup() %>%
   group_by(dyad, conv.num, conv.type, cond) %>%
@@ -100,13 +101,14 @@ coords.deriv = coords %>% ungroup() %>%
   mutate(jounce1 = c(0,diff(jerk1) / diff(t)))  # jounce for p0
 ```
 
-------------------------------------------------------------------------
+***
 
 ### Identify cutoff points for movement
 
 Allowing time for participant questions and any setup issues, the total instruction time preceding each conversation should have been approximately 60 to 120 seconds. We therefore check between 60 and 120 seconds of the data to identify likely beginning times using peak jerk and jounce.
 
-``` r
+
+```r
 # identify our minimum and maximum possible instruction end times
 min.check = 60
 max.check = 120
@@ -119,7 +121,7 @@ cutoff.points.jerk = coords.deriv %>% ungroup() %>%
   summarize(cutoff = max(c(jerk0,jerk1))) %>%
   merge(.,coords.deriv) %>%
   dplyr::filter((jerk0 == cutoff) | (jerk1 == cutoff)) %>%
-  select(-ends_with("0"),-ends_with("1")) 
+  select(-ends_with("0"),-ends_with("1"))
 
 # identify possible cutoff times using jounce
 cutoff.points.jounce = coords.deriv %>% ungroup() %>%
@@ -129,18 +131,21 @@ cutoff.points.jounce = coords.deriv %>% ungroup() %>%
   summarize(cutoff = max(c(jounce0,jounce1))) %>%
   merge(.,coords.deriv) %>%
   dplyr::filter((jounce0 == cutoff) | (jounce1 == cutoff)) %>%
-  select(-ends_with("0"),-ends_with("1")) 
+  select(-ends_with("0"),-ends_with("1"))
 
 # are they correlated?
 pander(cor.test(cutoff.points.jounce$t,cutoff.points.jerk$t),
        style = "rmarkdown")
 ```
 
+
+
 ![**Figure**. Correlation of jounce and jerk for each conversation of each dyad, including best-fit line.](./figures/DCC-jounce_v_jerk-knitr.jpg)
 
-Jerk and jounce are significantly correlated (r = .68, *t*(40) = 5.79, *p* &lt; .0001), and given its slightly more conservative measure (i.e., tending to identify later points), we will use the cutoff points identified by jounce. We now need to remove everything before that cutoff point from the analyzed dataset.
+Jerk and jounce are significantly correlated (r = .68, *t*(40) = 5.79, *p* < .0001), and given its slightly more conservative measure (i.e., tending to identify later points), we will use the cutoff points identified by jounce. We now need to remove everything before that cutoff point from the analyzed dataset.
 
-``` r
+
+```r
 # rename jounce's time variable
 cutoff.points.jounce = plyr::rename(cutoff.points.jounce,c("t" = 'cutoff.t'))
 
@@ -152,16 +157,16 @@ coords.trimmed = coords.deriv %>% ungroup() %>%
   select(-one_of("cutoff.t",'cutoff'))
 ```
 
-------------------------------------------------------------------------
+***
 
-Run a Butterworth filter over the data
---------------------------------------
+## Run a Butterworth filter over the data
 
 Now that we've identified our cutoff points at the beginning of each conversation, let's run a Butterworth filter over the data to smooth it a bit.
 
 Note that the `dplyr` code is somewhat inelegant, given problems using `mutate_each` with any namespaced function (like `signal::filter`).
 
-``` r
+
+```r
 # set Butterworth filter values
 bfilt = butter(2,.02)
 
@@ -175,23 +180,23 @@ coords.filtered = coords.trimmed %>%
   select(-matches("jerk"),-matches("x"), -matches("y"), -matches("z"))
 ```
 
-------------------------------------------------------------------------
+***
 
-Save trimmed data to file
--------------------------
+## Save trimmed data to file
 
-``` r
+
+```r
 write.table(coords.filtered,'./data/DCC-filtered-data.csv', sep=',',
             row.names=FALSE,col.names=TRUE)
 ```
 
-------------------------------------------------------------------------
+***
 
-Summary statistics on conversation lengths
-------------------------------------------
+## Summary statistics on conversation lengths
 
-``` r
-# read in the conversation data 
+
+```r
+# read in the conversation data
 coords.filtered = read.table('./data/DCC-filtered-data.csv', sep=',',header=TRUE)
 
 # identify the maximum time for each dyad
@@ -204,32 +209,37 @@ interaction.time = coords.filtered %>%
 mean(interaction.time$duration)
 ```
 
-    ## [1] 394.0071
+```
+## [1] 394.0071
+```
 
-``` r
+```r
 # what's the range of conversation data (in seconds)?
 range(interaction.time$duration)
 ```
 
-    ## [1] 167.6 544.6
+```
+## [1] 167.6 544.6
+```
+
+
 
 ![**Figure**. Histogram of all recorded conversation lengths within the dataset.](./figures/DCC-recorded_lengths-knitr.jpg)
 
-------------------------------------------------------------------------
+***
 
-Recurrence analyses
-===================
+# Recurrence analyses
 
 **NOTE**: The chunks of code in this section do not have to be run each time, since the resulting datasets will be saved to CSV files. As a result, these chunks are currently set to `eval=FALSE`. Bear this in mind if these data need to be re-calculated.
 
-------------------------------------------------------------------------
+***
 
-Preliminaries
--------------
+## Preliminaries
 
 This section clears the workspace and reads in the prepared data files.
 
-``` r
+
+```r
 # clear our workspace
 rm(list=ls())
 
@@ -240,28 +250,28 @@ source('./supplementary-code/libraries_and_functions-DCC.r')
 coords = read.table('./data/DCC-filtered-data.csv', sep=',', header = TRUE)
 ```
 
-------------------------------------------------------------------------
+***
 
-Identify CRQA parameters
-------------------------
+## Identify CRQA parameters
 
 Before we can analyze the data, we need to identify the appropriate parameters for continuous CRQA for the dataset. We identify parameters that provide a steady *rate of recurrence* or *RR* of 5% for each conversation of each dyad and save these parameters to a CSV file.
 
 **NOTE TO SELF**: Uncomment the source file before releasing.
 
-``` r
+
+```r
 # run CRQA parameters
 source('./supplementary-code/continuous_rqa_parameters-DCC.r')
 ```
 
-------------------------------------------------------------------------
+***
 
-Prepare for CRQA and DRPs
--------------------------
+## Prepare for CRQA and DRPs
 
-``` r
+
+```r
 # read in our chosen parameters
-crqa_params = read.table('./data/crqa_data_and_parameters-DCC.csv', 
+crqa_params = read.table('./data/crqa_data_and_parameters-DCC.csv',
                          sep=',',header=TRUE)
 
 # grab only the parameters we need
@@ -282,20 +292,20 @@ coords_crqa = plyr::join(x=crqa_params,y=coords_crqa,
                               'conv.num'='conv.num'))
 
 # slice up the data so that we have one dataset per conversation
-split_convs = split(coords_crqa, 
+split_convs = split(coords_crqa,
                     list(coords_crqa$dyad, coords_crqa$conv.num))
 ```
 
-------------------------------------------------------------------------
+***
 
-Run CRQA and DRPs
------------------
+## Run CRQA and DRPs
 
 Now that we have our parameters, we run continuous CRQA over each conversation for each dyad using the `crqa` function from the `crqa` package (Coco & Dale, 2014, *Frontiers in Psychology*). In addition to saving the standard plot-level metrics, we also save individual cross-recurrence plots to file.
 
 **Note**: Saving the cross-recurrence plots is not necessary for later steps of the analysis and adds significant computational strain. The section producing the plots may be commented out to save time, if desired.
 
-``` r
+
+```r
 # identify window size
 target_seconds = 5
 sampling_rate = 10
@@ -344,19 +354,19 @@ for (next_conv in split_convs){
                                 rec_analysis[1:9]))
   names(next_data_line) = c("dyad",'conv.type',names(rec_analysis[1:9]))
   crqa_results = rbind.data.frame(crqa_results,next_data_line)
-  
+
   # recreate DRP from diagonal lines within our target window
   diag_lines = spdiags(rec_analysis$RP)
   subset_plot = data.frame(diag_lines$B[,diag_lines$d >= -win_size & diag_lines$d <= win_size])
   rr = colSums(subset_plot)/dim(subset_plot)[1]
-  
+
   # convert to dataframe, padding (with 0) where no RR was observed (since `spdiags` returns only nonzero vectors)
   next_drp = full_join(data.frame(lag = as.integer(str_replace(names(rr),'X',''))-51,
                                   rr = rr),
-                       data.frame(lag = -win_size:win_size), 
+                       data.frame(lag = -win_size:win_size),
                        by='lag')
   next_drp[is.na(next_drp)] = 0
-  
+
   # save it to dataframe
   next_drp$dyad = dyad_num
   next_drp$conv.type = unique(next_conv$conv.type)
@@ -368,12 +378,12 @@ write.table(crqa_results,'./data/crqa_results-DCC.csv',sep=",")
 write.table(drp_results,'./data/drp_results-DCC.csv',sep=',')
 ```
 
-------------------------------------------------------------------------
+***
 
-Export merged recurrence dataset
---------------------------------
+## Export merged recurrence dataset
 
-``` r
+
+```r
 # merge CRQA and DRP analysis results
 recurrence_results = plyr::join(drp_results, crqa_results,
                                 by=c('dyad','conv.type'))
@@ -390,23 +400,22 @@ recurrence_df = plyr::join(recurrence_results, additional_dyad_info,
 write.table(recurrence_df,'./data/recurrence_df-DCC.csv',sep=',')
 ```
 
-------------------------------------------------------------------------
+***
 
-Data preparation
-================
+# Data preparation
 
 Now that we've calculated our CRQA and DRP measures, we're ready to prepare our data for analysis.
 
 **NOTE**: The chunks of code in this section do not have to be run each time, since the resulting datasets will be saved to CSV files. As a result, these chunks are currently set to `eval=FALSE`. Bear this in mind if these data need to be re-calculated.
 
-------------------------------------------------------------------------
+***
 
-Preliminaries
--------------
+## Preliminaries
 
 This section clears the workspace and reads in the prepared data files.
 
-``` r
+
+```r
 # clear our workspace
 rm(list=ls())
 
@@ -417,14 +426,14 @@ source('./supplementary-code/libraries_and_functions-DCC.r')
 recurrence_df = read.table('./data/recurrence_df-DCC.csv',sep=',',header=TRUE)
 ```
 
-------------------------------------------------------------------------
+***
 
-Create first- and second-order polynomials
-------------------------------------------
+## Create first- and second-order polynomials
 
 In order to examine the linear and curvilinear patterns in the DRPs (cf. Main, Paxton, & Dale, 2016, *Emotion*), we create orthogonal polynomials for the lag term. This section creates the first- and second-order othogonal polynomials that are essential to allowing us to interpret the linear (i.e., first-order polynomial) and quadratic (i.e., second-order polynomial) patterns in the DRP independently from one another.
 
-``` r
+
+```r
 # create first- and second-order orthogonal polynomials for lag
 raw_lag = min(recurrence_df$lag):max(recurrence_df$lag)
 lag_vals = data.frame(raw_lag)
@@ -436,14 +445,15 @@ lag_vals[, paste("ot", 1:2, sep="")] = t[lag_vals$raw_lag + lag_offset, 1:2]
 recurrence_df = left_join(recurrence_df,lag_vals, by = c("lag" = "raw_lag"))
 ```
 
-------------------------------------------------------------------------
 
-Create interaction terms
-------------------------
+***
+
+## Create interaction terms
 
 Because we will be providing both standardized and raw models, we create all interaction terms here. For simplicity, we will now change the `conv.type` variable to `convers` and `cond` to `condition`. Additionally, because we will be manually creating all interaction terms, we code `condition` and `convers` with levels `-0.5` and `0.5`; this ensures that we have nonzero values for interaction terms in the affiliative (`convers = 0`) and dual-task (`condition = 0`) cases.
 
-``` r
+
+```r
 # rename variables and center the binary variables
 recurrence_df = recurrence_df %>% ungroup() %>%
   plyr::rename(.,
@@ -452,17 +462,17 @@ recurrence_df = recurrence_df %>% ungroup() %>%
   mutate(condition = condition-.5) %>%
   mutate(convers = convers-.5) %>%
   mutate(condition.convers = condition * convers) %>%
-  
+
   # first-order polynomials
   mutate(condition.ot1 = condition * ot1) %>%
   mutate(convers.ot1 = convers * ot1) %>%
   mutate(condition.convers.ot1 = condition * convers * ot1) %>%
-  
+
   # second-order polynomials
   mutate(condition.ot2 = condition * ot2) %>%
   mutate(convers.ot2 = convers * ot2) %>%
   mutate(condition.convers.ot2 = condition * convers * ot2) %>%
-  
+
   # polynomial interactions
   mutate(ot1.ot2 = ot1 * ot2) %>%
   mutate(condition.ot1.ot2 = condition * ot1 * ot2) %>%
@@ -470,24 +480,24 @@ recurrence_df = recurrence_df %>% ungroup() %>%
   mutate(condition.convers.ot1.ot2 = condition * convers * ot1 * ot2)
 ```
 
-------------------------------------------------------------------------
+***
 
-Create standardized dataframe
------------------------------
+## Create standardized dataframe
 
 Let's create a new dataframe with all standardized variables. This allows us to interpret the resulting values as effect sizes (see Keith, 2005, *Multiple regression and beyond*).
 
-``` r
+
+```r
 # standardize all variables
 rec_st = mutate_each(recurrence_df,funs(as.numeric(scale(.))))
 ```
 
-------------------------------------------------------------------------
+***
 
-Export analysis and plotting dataframes
----------------------------------------
+## Export analysis and plotting dataframes
 
-``` r
+
+```r
 # export plotting dataframe
 write.table(recurrence_df,'./data/plotting_df-DCC.csv',row.names=FALSE,sep=',')
 
@@ -495,21 +505,20 @@ write.table(recurrence_df,'./data/plotting_df-DCC.csv',row.names=FALSE,sep=',')
 write.table(rec_st,'./data/analysis_df-DCC.csv',row.names=FALSE,sep=',')
 ```
 
-------------------------------------------------------------------------
+***
 
-Data analysis
-=============
+# Data analysis
 
 All data have been cleaned, all parameters have been identified, and all final data preparation has been finished. Using the analysis-ready dataframe (`rec_st`) and plotting dataframe (`rec_plot`), we now analyze our data and generate visualizations.
 
-------------------------------------------------------------------------
+***
 
-Preliminaries
--------------
+## Preliminaries
 
 This section clears the workspace and reads in the prepared data files.
 
-``` r
+
+```r
 # clear our workspace
 rm(list=ls())
 
@@ -521,92 +530,158 @@ rec_st = read.table('./data/analysis_df-DCC.csv',sep=',',header=TRUE)
 rec_plot = read.table('./data/plotting_df-DCC.csv',sep=',',header=TRUE)
 ```
 
-------------------------------------------------------------------------
+***
 
-Recurrence by lag, conversation type, and condition
----------------------------------------------------
+## Recurrence by lag, conversation type, and condition
 
 We now create a linear mixed-effects model to gauge how linear lag (`ot1`) and quadratic lag (`ot2`) interact with conversation type (`convers`) and task (`condition`) to influence head movement coordination (`rr`). We present both standardized and raw models below.
 
-``` r
-# standardized model
+
+```r
+# standardized maximal random-effects model
 rec_convers_condition_gca_st = lmer(rr ~ convers + condition + ot1 + ot2 +
-                                      condition.convers + ot1.ot2 +
-                                      convers.ot1 + condition.ot1 + condition.convers.ot1 +
-                                      convers.ot2 + condition.ot2 + condition.convers.ot2 +
-                                      convers.ot1.ot2 + condition.ot1.ot2 + condition.convers.ot1.ot2 +
-                                      (1 + ot1 + ot2 + convers + condition.convers.ot1 | conv.num) + 
-                                      (1 + ot1 + ot2 + convers + condition.convers.ot1 | dyad), 
-                                    data=rec_st,REML=FALSE)
-invisible(pander_lme_to_latex(rec_convers_condition_gca_st,'standardized_model_latex-DCC.tex'))
-pander_lme(rec_convers_condition_gca_st,stats.caption = TRUE)
-```
-
-|                               |  Estimate | Std..Error |  t.value |   p   |   sig  |
-|:-----------------------------:|:---------:|:----------:|:--------:|:-----:|:------:|
-|        **(Intercept)**        | -0.003143 |   0.1826   | -0.01721 |  0.99 |        |
-|          **convers**          |  -0.4006  |   0.09032  |  -4.435  |   0   | \*\*\* |
-|         **condition**         |  0.08417  |   0.1398   |  0.6022  |  0.55 |        |
-|            **ot1**            |  -0.05408 |   0.04828  |   -1.12  |  0.26 |        |
-|            **ot2**            |  -0.08307 |   0.05609  |  -1.481  | 0.139 |        |
-|     **condition.convers**     |  0.04365  |   0.08955  |  0.4875  |  0.63 |        |
-|          **ot1.ot2**          |  0.01577  |  0.007959  |   1.981  | 0.048 |   \*   |
-|        **convers.ot1**        |  -0.02264 |   0.04189  |  -0.5406 |  0.59 |        |
-|       **condition.ot1**       |  -0.01609 |   0.04756  |  -0.3384 |  0.74 |        |
-|   **condition.convers.ot1**   |  -0.04469 |   0.04213  |  -1.061  |  0.29 |        |
-|        **convers.ot2**        |  0.01052  |  0.005704  |   1.844  | 0.065 |    .   |
-|       **condition.ot2**       |   0.0159  |   0.04667  |  0.3406  |  0.73 |        |
-|   **condition.convers.ot2**   |  0.001052 |  0.005608  |  0.1876  |  0.85 |        |
-|      **convers.ot1.ot2**      |   0.0447  |  0.007959  |   5.617  |   0   | \*\*\* |
-|     **condition.ot1.ot2**     |  0.02458  |  0.007959  |   3.088  | 0.002 |  \*\*  |
-| **condition.convers.ot1.ot2** |  0.05188  |  0.007959  |   6.518  |   0   | \*\*\* |
-
-``` r
-# raw model
-rec_convers_condition_gca_raw = lmer(rr ~ convers + condition + ot1 + ot2 +
                                        condition.convers + ot1.ot2 +
                                        convers.ot1 + condition.ot1 + condition.convers.ot1 +
                                        convers.ot2 + condition.ot2 + condition.convers.ot2 +
                                        convers.ot1.ot2 + condition.ot1.ot2 + condition.convers.ot1.ot2 +
                                        (1 + ot1 + ot2 + convers + condition.convers.ot1 | conv.num) + 
-                                       (1 + ot1 + ot2 + convers + condition.convers.ot1 | dyad), 
-                                     data=rec_plot,REML=FALSE)
+                                       (1 + ot1 + ot2 + convers + condition.convers.ot1 | dyad), data=rec_st, REML=FALSE)
+invisible(pander_lme_to_latex(rec_convers_condition_gca_st,'standardized_model_latex-DCC.tex'))
+pander_lme(rec_convers_condition_gca_st,stats.caption = TRUE)
+```
+
+
+
+|             &nbsp;              |  Estimate  |  Std..Error  |  t.value  |   p   |  sig  |
+|:-------------------------------:|:----------:|:------------:|:---------:|:-----:|:-----:|
+|         **(Intercept)**         | -0.003143  |    0.1826    | -0.01721  | 0.99  |       |
+|           **convers**           |  -0.4006   |   0.09032    |  -4.435   |   0   |  ***  |
+|          **condition**          |  0.08417   |    0.1398    |  0.6022   | 0.55  |       |
+|             **ot1**             |  -0.05408  |   0.04828    |   -1.12   | 0.26  |       |
+|             **ot2**             |  -0.08307  |   0.05609    |  -1.481   | 0.139 |       |
+|      **condition.convers**      |  0.04365   |   0.08955    |  0.4875   | 0.63  |       |
+|           **ot1.ot2**           |  0.01577   |   0.007959   |   1.981   | 0.048 |   *   |
+|         **convers.ot1**         |  -0.02264  |   0.04189    |  -0.5406  | 0.59  |       |
+|        **condition.ot1**        |  -0.01609  |   0.04756    |  -0.3384  | 0.74  |       |
+|    **condition.convers.ot1**    |  -0.04469  |   0.04213    |  -1.061   | 0.29  |       |
+|         **convers.ot2**         |  0.01052   |   0.005704   |   1.844   | 0.065 |   .   |
+|        **condition.ot2**        |   0.0159   |   0.04667    |  0.3406   | 0.73  |       |
+|    **condition.convers.ot2**    |  0.001052  |   0.005608   |  0.1876   | 0.85  |       |
+|       **convers.ot1.ot2**       |   0.0447   |   0.007959   |   5.617   |   0   |  ***  |
+|      **condition.ot1.ot2**      |  0.02458   |   0.007959   |   3.088   | 0.002 |  **   |
+|  **condition.convers.ot1.ot2**  |  0.05188   |   0.007959   |   6.518   |   0   |  ***  |
+
+Table: **Marginal *R*-squared: 0.17. Conditional *R*-squared: 0.88.**
+
+```r
+# raw maximal random-effects model
+rec_convers_condition_gca_raw = lmer(rr ~ convers + condition + ot1 + ot2 +
+                                       condition.convers + ot1.ot2 +
+                                       convers.ot1 + condition.ot1 + condition.convers.ot1 +
+                                       convers.ot2 + condition.ot2 + condition.convers.ot2 +
+                                       convers.ot1.ot2 + condition.ot1.ot2 + condition.convers.ot1.ot2 +
+                                       (1 + ot1 + ot2 + convers + condition.convers.ot1 | conv.num) +
+                                       (1 + ot1 + ot2 + convers + condition.convers.ot1 | dyad), data=rec_plot,REML=FALSE)
 pander_lme(rec_convers_condition_gca_raw,stats.caption = TRUE)
 ```
 
-|                               |  Estimate | Std..Error | t.value |   p   |   sig  |
-|:-----------------------------:|:---------:|:----------:|:-------:|:-----:|:------:|
-|        **(Intercept)**        |  0.04603  |  0.004751  |  9.688  |   0   | \*\*\* |
-|          **convers**          |  -0.02072 |  0.004671  |  -4.435 |   0   | \*\*\* |
-|         **condition**         |  0.004398 |  0.007302  |  0.6022 |  0.55 |        |
-|            **ot1**            |  -0.01405 |   0.01255  |  -1.12  |  0.26 |        |
-|            **ot2**            |  -0.02159 |   0.01457  |  -1.481 | 0.139 |        |
-|     **condition.convers**     |  0.004515 |  0.009262  |  0.4875 |  0.63 |        |
-|          **ot1.ot2**          |  0.03286  |   0.01658  |  1.981  | 0.048 |   \*   |
-|        **convers.ot1**        |  -0.01177 |   0.02177  | -0.5406 |  0.59 |        |
-|       **condition.ot1**       | -0.008363 |   0.02472  | -0.3384 |  0.74 |        |
-|   **condition.convers.ot1**   |  -0.04645 |   0.04379  |  -1.061 |  0.29 |        |
-|        **convers.ot2**        |  0.005466 |  0.002964  |  1.844  | 0.065 |    .   |
-|       **condition.ot2**       |  0.008261 |   0.02426  |  0.3406 |  0.73 |        |
-|   **condition.convers.ot2**   |  0.001094 |  0.005829  |  0.1876 |  0.85 |        |
-|      **convers.ot1.ot2**      |   0.1863  |   0.03317  |  5.617  |   0   | \*\*\* |
-|     **condition.ot1.ot2**     |   0.1024  |   0.03317  |  3.088  | 0.002 |  \*\*  |
-| **condition.convers.ot1.ot2** |   0.4324  |   0.06634  |  6.518  |   0   | \*\*\* |
 
-------------------------------------------------------------------------
 
-Exploring interaction terms
----------------------------
+|             &nbsp;              |  Estimate  |  Std..Error  |  t.value  |   p   |  sig  |
+|:-------------------------------:|:----------:|:------------:|:---------:|:-----:|:-----:|
+|         **(Intercept)**         |  0.04603   |   0.004751   |   9.688   |   0   |  ***  |
+|           **convers**           |  -0.02072  |   0.004671   |  -4.435   |   0   |  ***  |
+|          **condition**          |  0.004398  |   0.007302   |  0.6022   | 0.55  |       |
+|             **ot1**             |  -0.01405  |   0.01255    |   -1.12   | 0.26  |       |
+|             **ot2**             |  -0.02159  |   0.01457    |  -1.481   | 0.139 |       |
+|      **condition.convers**      |  0.004515  |   0.009262   |  0.4875   | 0.63  |       |
+|           **ot1.ot2**           |  0.03286   |   0.01658    |   1.981   | 0.048 |   *   |
+|         **convers.ot1**         |  -0.01177  |   0.02177    |  -0.5406  | 0.59  |       |
+|        **condition.ot1**        | -0.008363  |   0.02472    |  -0.3384  | 0.74  |       |
+|    **condition.convers.ot1**    |  -0.04645  |   0.04379    |  -1.061   | 0.29  |       |
+|         **convers.ot2**         |  0.005466  |   0.002964   |   1.844   | 0.065 |   .   |
+|        **condition.ot2**        |  0.008261  |   0.02426    |  0.3406   | 0.73  |       |
+|    **condition.convers.ot2**    |  0.001094  |   0.005829   |  0.1876   | 0.85  |       |
+|       **convers.ot1.ot2**       |   0.1863   |   0.03317    |   5.617   |   0   |  ***  |
+|      **condition.ot1.ot2**      |   0.1024   |   0.03317    |   3.088   | 0.002 |  **   |
+|  **condition.convers.ot1.ot2**  |   0.4324   |   0.06634    |   6.518   |   0   |  ***  |
+
+Table: **Marginal *R*-squared: 0.17. Conditional *R*-squared: 0.88.**
+
+***
+
+### Comparing maximal random-effects model to random-intercepts-only model
+
+We next check whether our maximal random-effects model (above) provides a better fit to the data than a model with only random intercepts for `dyad` and `conv.num` that is otherwise identical. We present analyses of both standardized and raw datasets.
+
+The maximal random-effects model (i.e., that with maximally permissible random slopes for random intercepts of `dyad` and `conv.num`  using backwards selection; cf. Barr et al., 2013, *Journal of Memory and Language*) accounts for significantly more of the data than the random-intercept-only model. Plots of the residuals of both maximal and random-intercepts-only models demonstrate that the maximal model better meets the assumptions of homogeneity and normality of residuals than the random-intercepts-only model.
+
+
+```r
+# standardized random-intercepts-only model
+rec_convers_condition_gca_st_rio = lmer(rr ~ convers + condition + ot1 + ot2 +
+                                      condition.convers + ot1.ot2 +
+                                      convers.ot1 + condition.ot1 + condition.convers.ot1 +
+                                      convers.ot2 + condition.ot2 + condition.convers.ot2 +
+                                      convers.ot1.ot2 + condition.ot1.ot2 + condition.convers.ot1.ot2 +
+                                      (1 | conv.num) + (1 | dyad), data=rec_st, REML=FALSE)
+
+# is the maximal random-effects model a better fit than the random-intercepts-only model? (standardized)
+pander_anova(anova(rec_convers_condition_gca_st_rio,rec_convers_condition_gca_st,test="Chisq"))
+```
+
+
+
+|                 &nbsp;                 |  DF  |  AIC  |  BIC  |  Log Likelihood  |  deviance  |     Chi Sq.     |  Chi Sq. DF  |  p  |  sig  |
+|:--------------------------------------:|:----:|:-----:|:-----:|:----------------:|:----------:|:---------------:|:------------:|:---:|:-----:|
+|  **rec_convers_condition_gca_st_rio**  |  19  | 8485  | 8606  |      -4224       |    8447    |                 |              |     |       |
+|    **rec_convers_condition_gca_st**    |  47  | 3938  | 4237  |      -1922       |    3844    | 4603.3855718923 |      28      |  0  |  ***  |
+
+
+```r
+# raw random-intercepts-only model
+rec_convers_condition_gca_raw_rio = lmer(rr ~ convers + condition + ot1 + ot2 +
+                                       condition.convers + ot1.ot2 +
+                                       convers.ot1 + condition.ot1 + condition.convers.ot1 +
+                                       convers.ot2 + condition.ot2 + condition.convers.ot2 +
+                                       convers.ot1.ot2 + condition.ot1.ot2 + condition.convers.ot1.ot2 +
+                                       (1 | conv.num) +
+                                       (1 | dyad),
+                                     data=rec_plot,REML=FALSE)
+
+# is the maximal random-effects model a better fit than the random-intercepts-only model? (raw)
+pander_anova(anova(rec_convers_condition_gca_raw_rio,rec_convers_condition_gca_raw,test='Chisq'))
+```
+
+
+
+|                 &nbsp;                  |  DF  |  AIC   |  BIC   |  Log Likelihood  |  deviance  |     Chi Sq.      |  Chi Sq. DF  |  p  |  sig  |
+|:---------------------------------------:|:----:|:------:|:------:|:----------------:|:----------:|:----------------:|:------------:|:---:|:-----:|
+|  **rec_convers_condition_gca_raw_rio**  |  19  | -22524 | -22404 |      11281       |   -22562   |                  |              |     |       |
+|    **rec_convers_condition_gca_raw**    |  47  | -27072 | -26773 |      13583       |   -27166   | 4603.38544454209 |      28      |  0  |  ***  |
+
+
+
+![**Figure**. Residuals plots using standardized dataset. Residuals are more evenly distributed around 0 for the maximal model (right) than the random-intercepts-only model (left), meeting the assumption of homogeneity of residuals.](./figures/DCC-standardized_residuals_plot.png)
+
+
+
+![**Figure**. Frequency density plots of residuals using standardized dataset. Residuals for the maximal model (right) are more normally distributed than the random-intercepts-only model (left), meeting the assumption of normality of residuals.](./figures/DCC-standardized_residuals_hist.png)
+
+***
+
+## Exploring interaction terms
 
 Let's do some investigations into the significant four-way interaction. After inspecting the interaction plot (see Discussion section), we choose to divide the data by conversation type -- exploring whether we still see significant differences in synchrony by task condition when we examine the conversations separately.
 
-------------------------------------------------------------------------
+***
 
 ### Prepare separate datasets for each conversation
 
 We create raw and standardized datasets for each conversation type here.
 
-``` r
+
+```r
 # select only the friendly conversations (convers = -.5)
 aff_only_raw = rec_plot %>%
   filter(convers < 0)
@@ -626,119 +701,140 @@ arg_only_st = arg_only_raw %>%
   mutate(convers = .5)
 ```
 
-------------------------------------------------------------------------
+***
 
 ### Post-hoc interaction tests
 
 Do we still see significant differences by condition in each conversation?
 
-``` r
+
+```r
 # check for differences in the friendly conversation (raw)
-cond_aff_gca_raw = lmer(rr ~ condition + 
+cond_aff_gca_raw = lmer(rr ~ condition +
                       ot1 + ot2 + ot1.ot2 +
                       condition.ot1 + condition.ot2 + condition.ot1.ot2 +
-                      (1 + ot1 + ot2 + condition | conv.num) + 
-                      (1 + ot1 + ot2 + condition | dyad), 
+                      (1 + ot1 + ot2 + condition | conv.num) +
+                      (1 + ot1 + ot2 + condition | dyad),
                     data=aff_only_raw,REML=FALSE)
 pander_lme(cond_aff_gca_raw, stats.caption=TRUE)
 ```
 
-|                       |  Estimate | Std..Error | t.value |   p   |   sig  |
-|:---------------------:|:---------:|:----------:|:-------:|:-----:|:------:|
-|    **(Intercept)**    |  0.05566  |  0.004019  |  13.85  |   0   | \*\*\* |
-|     **condition**     |  0.001413 |  0.008038  |  0.1758 |  0.86 |        |
-|        **ot1**        | -0.007443 |   0.02023  |  -0.368 |  0.71 |        |
-|        **ot2**        |  -0.02218 |   0.02033  |  -1.091 |  0.28 |        |
-|      **ot1.ot2**      |  -0.0603  |   0.0224   |  -2.692 | 0.007 |  \*\*  |
-|   **condition.ot1**   |  0.01605  |   0.04045  |  0.3968 |  0.69 |        |
-|   **condition.ot2**   |  0.00985  |   0.04066  |  0.2422 |  0.81 |        |
-| **condition.ot1.ot2** |  -0.1138  |   0.0448   |  -2.54  | 0.011 |   \*   |
 
-``` r
+
+|         &nbsp;          |  Estimate  |  Std..Error  |  t.value  |   p   |  sig  |
+|:-----------------------:|:----------:|:------------:|:---------:|:-----:|:-----:|
+|     **(Intercept)**     |  0.05566   |   0.004019   |   13.85   |   0   |  ***  |
+|      **condition**      |  0.001413  |   0.008038   |  0.1758   | 0.86  |       |
+|         **ot1**         | -0.007443  |   0.02023    |  -0.368   | 0.71  |       |
+|         **ot2**         |  -0.02218  |   0.02033    |  -1.091   | 0.28  |       |
+|       **ot1.ot2**       |  -0.0603   |    0.0224    |  -2.692   | 0.007 |  **   |
+|    **condition.ot1**    |  0.01605   |   0.04045    |  0.3968   | 0.69  |       |
+|    **condition.ot2**    |  0.00985   |   0.04066    |  0.2422   | 0.81  |       |
+|  **condition.ot1.ot2**  |  -0.1138   |    0.0448    |   -2.54   | 0.011 |   *   |
+
+Table: **Marginal *R*-squared: 0.01. Conditional *R*-squared: 0.88.**
+
+```r
 # check for differences in the friendly conversation (standardized)
-cond_aff_gca_st = lmer(rr ~ condition + 
+cond_aff_gca_st = lmer(rr ~ condition +
                       ot1 + ot2 + ot1.ot2 +
                       condition.ot1 + condition.ot2 + condition.ot1.ot2 +
-                      (1 + ot1 + ot2 + condition | conv.num) + 
-                      (1 + ot1 + ot2 + condition | dyad), 
+                      (1 + ot1 + ot2 + condition | conv.num) +
+                      (1 + ot1 + ot2 + condition | dyad),
                     data=aff_only_st,REML=FALSE)
 pander_lme(cond_aff_gca_st, stats.caption=TRUE)
 ```
 
-|                       |    Estimate    | Std..Error |    t.value   |   p   |  sig |
-|:---------------------:|:--------------:|:----------:|:------------:|:-----:|:----:|
-|    **(Intercept)**    | -0.00000006682 |   0.1763   | -0.000000379 |   1   |      |
-|     **condition**     |     0.02885    |   0.1642   |    0.1758    |  0.86 |      |
-|        **ot1**        |    -0.03056    |   0.08305  |    -0.368    |  0.71 |      |
-|        **ot2**        |    -0.09109    |   0.08348  |    -1.091    |  0.28 |      |
-|      **ot1.ot2**      |    -0.03087    |   0.01147  |    -2.692    | 0.007 | \*\* |
-|   **condition.ot1**   |     0.03296    |   0.08305  |    0.3968    |  0.69 |      |
-|   **condition.ot2**   |     0.02022    |   0.08348  |    0.2422    |  0.81 |      |
-| **condition.ot1.ot2** |    -0.02913    |   0.01147  |     -2.54    | 0.011 |  \*  |
 
-``` r
+
+|         &nbsp;          |    Estimate    |  Std..Error  |   t.value    |   p   |  sig  |
+|:-----------------------:|:--------------:|:------------:|:------------:|:-----:|:-----:|
+|     **(Intercept)**     | -0.00000006682 |    0.1763    | -0.000000379 |   1   |       |
+|      **condition**      |    0.02885     |    0.1642    |    0.1758    | 0.86  |       |
+|         **ot1**         |    -0.03056    |   0.08305    |    -0.368    | 0.71  |       |
+|         **ot2**         |    -0.09109    |   0.08348    |    -1.091    | 0.28  |       |
+|       **ot1.ot2**       |    -0.03087    |   0.01147    |    -2.692    | 0.007 |  **   |
+|    **condition.ot1**    |    0.03296     |   0.08305    |    0.3968    | 0.69  |       |
+|    **condition.ot2**    |    0.02022     |   0.08348    |    0.2422    | 0.81  |       |
+|  **condition.ot1.ot2**  |    -0.02913    |   0.01147    |    -2.54     | 0.011 |   *   |
+
+Table: **Marginal *R*-squared: 0.01. Conditional *R*-squared: 0.88.**
+
+
+```r
 # check for differences in the argumentative conversation (raw)
-cond_arg_gca_raw = lmer(rr ~ condition + 
+cond_arg_gca_raw = lmer(rr ~ condition +
                       ot1 + ot2 + ot1.ot2 +
                       condition.ot1 + condition.ot2 + condition.ot1.ot2 +
-                      (1 + ot1 + ot2 + condition | conv.num) + 
-                      (1 + ot1 + ot2 + condition | dyad), 
+                      (1 + ot1 + ot2 + condition | conv.num) +
+                      (1 + ot1 + ot2 + condition | dyad),
                     data=arg_only_raw,REML=FALSE)
 pander_lme(cond_arg_gca_raw, stats.caption=TRUE)
 ```
 
-|                       | Estimate | Std..Error | t.value |   p   |   sig  |
-|:---------------------:|:--------:|:----------:|:-------:|:-----:|:------:|
-|    **(Intercept)**    |  0.03608 |  0.006248  |  5.775  |   0   | \*\*\* |
-|     **condition**     |  0.00775 |   0.01147  |  0.6759 |  0.5  |        |
-|        **ot1**        | -0.02112 |   0.01179  |  -1.792 | 0.073 |    .   |
-|        **ot2**        | -0.02037 |  0.009588  |  -2.124 | 0.034 |   \*   |
-|      **ot1.ot2**      |   0.126  |   0.01841  |  6.843  |   0   | \*\*\* |
-|   **condition.ot1**   | -0.03231 |   0.02244  |  -1.44  |  0.15 |        |
-|   **condition.ot2**   | 0.007293 |   0.01826  |  0.3993 |  0.69 |        |
-| **condition.ot1.ot2** |  0.3186  |   0.03683  |  8.652  |   0   | \*\*\* |
 
-``` r
+
+|         &nbsp;          |  Estimate  |  Std..Error  |  t.value  |   p   |  sig  |
+|:-----------------------:|:----------:|:------------:|:---------:|:-----:|:-----:|
+|     **(Intercept)**     |  0.03608   |   0.006248   |   5.775   |   0   |  ***  |
+|      **condition**      |  0.00775   |   0.01147    |  0.6759   |  0.5  |       |
+|         **ot1**         |  -0.02112  |   0.01179    |  -1.792   | 0.073 |   .   |
+|         **ot2**         |  -0.02037  |   0.009588   |  -2.124   | 0.034 |   *   |
+|       **ot1.ot2**       |   0.126    |   0.01841    |   6.843   |   0   |  ***  |
+|    **condition.ot1**    |  -0.03231  |   0.02244    |   -1.44   | 0.15  |       |
+|    **condition.ot2**    |  0.007293  |   0.01826    |  0.3993   | 0.69  |       |
+|  **condition.ot1.ot2**  |   0.3186   |   0.03683    |   8.652   |   0   |  ***  |
+
+Table: **Marginal *R*-squared: 0.03. Conditional *R*-squared: 0.92.**
+
+```r
 # check for differences in the argumentative conversation (standardized)
-cond_arg_gca_st = lmer(rr ~ condition + 
+cond_arg_gca_st = lmer(rr ~ condition +
                       ot1 + ot2 + ot1.ot2 +
                       condition.ot1 + condition.ot2 + condition.ot1.ot2 +
-                      (1 + ot1 + ot2 + condition | conv.num) + 
-                      (1 + ot1 + ot2 + condition | dyad), 
+                      (1 + ot1 + ot2 + condition | conv.num) +
+                      (1 + ot1 + ot2 + condition | dyad),
                     data=arg_only_st,REML=FALSE)
 pander_lme(cond_arg_gca_st, stats.caption=TRUE)
 ```
 
-|                       | Estimate | Std..Error |  t.value |   p   |   sig  |
-|:---------------------:|:--------:|:----------:|:--------:|:-----:|:------:|
-|    **(Intercept)**    | -0.01892 |   0.2476   | -0.07641 |  0.94 |        |
-|     **condition**     |  0.1599  |   0.2365   |  0.6759  |  0.5  |        |
-|        **ot1**        | -0.08761 |   0.0489   |  -1.792  | 0.073 |    .   |
-|        **ot2**        | -0.08448 |   0.03976  |  -2.124  | 0.034 |   \*   |
-|      **ot1.ot2**      |  0.06517 |  0.009523  |   6.843  |   0   | \*\*\* |
-|   **condition.ot1**   | -0.06701 |   0.04654  |   -1.44  |  0.15 |        |
-|   **condition.ot2**   |  0.01512 |   0.03788  |  0.3993  |  0.69 |        |
-| **condition.ot1.ot2** |  0.0824  |  0.009523  |   8.652  |   0   | \*\*\* |
 
-------------------------------------------------------------------------
 
-Discussion
-==========
+|         &nbsp;          |  Estimate  |  Std..Error  |  t.value  |   p   |  sig  |
+|:-----------------------:|:----------:|:------------:|:---------:|:-----:|:-----:|
+|     **(Intercept)**     |  -0.01892  |    0.2476    | -0.07641  | 0.94  |       |
+|      **condition**      |   0.1599   |    0.2365    |  0.6759   |  0.5  |       |
+|         **ot1**         |  -0.08761  |    0.0489    |  -1.792   | 0.073 |   .   |
+|         **ot2**         |  -0.08448  |   0.03976    |  -2.124   | 0.034 |   *   |
+|       **ot1.ot2**       |  0.06517   |   0.009523   |   6.843   |   0   |  ***  |
+|    **condition.ot1**    |  -0.06701  |   0.04654    |   -1.44   | 0.15  |       |
+|    **condition.ot2**    |  0.01512   |   0.03788    |  0.3993   | 0.69  |       |
+|  **condition.ot1.ot2**  |   0.0824   |   0.009523   |   8.652   |   0   |  ***  |
+
+Table: **Marginal *R*-squared: 0.03. Conditional *R*-squared: 0.92.**
+
+***
+
+# Discussion
 
 The model's results indeed suggest that high- and low-level constraints influence coordination dynamics. We again saw that participants tend to be coordinated overall, although with a slight leading/following pattern (`ot1.ot2`). Extending previous findings with gross body movements in another naturalistic interaction corpus (Paxton & Dale, 2013, *Quarterly Journal of Experimental Psychology*), we here found that argument decreases interpersonal synchrony (`convers`). Conversation type also influenced the dynamics of coordination: Recurrence during the affiliative conversations was higher but more diffuse, while recurrence in the argumentative conversation was lower but more peaked (`convers.ot1.ot2`; trend for `convers.ot2`).
 
 Interestingly, although we hypothesized that the noise condition would increase coordination compared to a dual-task condition, we did not find a simple effect of condition (`condition`). Instead, condition affected the dynamics of coordination. Participants in the noise condition appeared to show a more iconic quadratic pattern (more greater temporal coupling) than those in the dual-task condition (`condition.ot1.ot2`), although the dual-task condition's coupling was more peaked around lag-0.
 
-We also found a complex, four-way interaction among predictors (`condition.convers.ot1.ot2`). In our separate follow-up analyses of each conversation type, movement remained significantly coordinated (`ot1.ot2`), and the three-way interaction among condition, LL, and QL (`condition.ot1.ot2`) were also still significant. However, we did not see a main effect of condition, reinforcing the idea that condition is influencing the dynamics or *unfolding* of the coordination.
+We also found a complex, four-way interaction among predictors (`condition.convers.ot1.ot2`).  In our separate follow-up analyses of each conversation type, movement remained significantly coordinated (`ot1.ot2`), and the three-way interaction among condition, LL, and QL (`condition.ot1.ot2`) were also still significant. However, we did not see a main effect of condition, reinforcing the idea that condition is influencing the dynamics or *unfolding* of the coordination.
 
 Taken together, we view our results as consistent with the growing view of interpersonal communication as a complex dynamical system.
 
-------------------------------------------------------------------------
+***
+
+
 
 ![**Figure**. Effects of conversation type (affiliative/argumentative), condition (dual-task/noise), and lag (±5 seconds at 10 Hz) on RR.](./figures/DCC-interaction-RR_lag_conversation_condition-knitr.png)
 
-------------------------------------------------------------------------
+***
+
+
 
 ![**Figure**. Individual profiles for each dyad's RR by conversation type (affiliative/argumentative), condition (dual-task/noise), and lag (±5 seconds at 10 Hz).](./figures/DCC-all_dyad_profiles-knitr.png)
 
-------------------------------------------------------------------------
+***

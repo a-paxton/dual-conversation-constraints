@@ -1,6 +1,8 @@
 ---
 title: "High- and Low-Level Constraints on Coordination during Conversation: Code for Paxton & Dale (under review)"
-output: html_document
+output: 
+  html_document:
+    keep_md: true
 ---
 
 This R markdown provides the basis for our manuscript, "Interpersonal movement synchrony responds to high- and low-level conversational constraints" (Paxton & Dale, under review). The study explores how high-level (i.e., conversational context) and low-level (i.e., visual stimuli) constraints affect interpersonal synchrony during conversation. We quantify coordination using amplitude of movement from head-mounted accelerometers (using Google Glass; see Paxton, Rodriguez, & Dale, 2015, *Behavior Research Methods*).
@@ -14,7 +16,7 @@ To run these analyses from scratch, you will need the following files:
 Additional files will be created during the initial run that will help reduce processing time. Several of these files--including the chosen CRQA parameters, the final plotting dataframe, and the final analysis dataframe---are available as CSVs from the OSF repository listed above.
 
 **Written by**: A. Paxton (University of California, Berkeley) and R. Dale (University of California, Merced)
-<br>**Date last modified**: 3 December 2016
+<br>**Date last modified**: 13 February 2017
 
 ***
 
@@ -87,7 +89,7 @@ After instructions were given, both participants were instructed to shake their 
 
 ***
 
-### Calculate Euclidean acceleration and first derivative 
+### Calculate Euclidean acceleration and first derivative
 
 These data were collected using an accelerometer. Because this measures the change in velocity on each plane, we might call this Euclidean *acceleration* (rather than Euclidean distance).
 
@@ -127,7 +129,7 @@ cutoff.points.jerk = coords.deriv %>% ungroup() %>%
   summarize(cutoff = max(c(jerk0,jerk1))) %>%
   merge(.,coords.deriv) %>%
   dplyr::filter((jerk0 == cutoff) | (jerk1 == cutoff)) %>%
-  select(-ends_with("0"),-ends_with("1")) 
+  select(-ends_with("0"),-ends_with("1"))
 
 # identify possible cutoff times using jounce
 cutoff.points.jounce = coords.deriv %>% ungroup() %>%
@@ -137,7 +139,7 @@ cutoff.points.jounce = coords.deriv %>% ungroup() %>%
   summarize(cutoff = max(c(jounce0,jounce1))) %>%
   merge(.,coords.deriv) %>%
   dplyr::filter((jounce0 == cutoff) | (jounce1 == cutoff)) %>%
-  select(-ends_with("0"),-ends_with("1")) 
+  select(-ends_with("0"),-ends_with("1"))
 
 # are they correlated?
 pander(cor.test(cutoff.points.jounce$t,cutoff.points.jerk$t),
@@ -154,13 +156,13 @@ jounce.v.jerk = qplot(x = cutoff.points.jounce$t, y = cutoff.points.jerk$t) +
   geom_abline()
 
 # save a high-resolution version of the plot
-ggsave(plot = jounce.v.jerk, 
+ggsave(plot = jounce.v.jerk,
        height = 3,
        width = 3,
        filename = './figures/DCC-jounce_v_jerk.jpg')
 
 # save a smaller version of the plot for knitr
-ggsave(plot = jounce.v.jerk, 
+ggsave(plot = jounce.v.jerk,
        height = 3,
        width = 3,
        dpi=100,
@@ -227,7 +229,7 @@ write.table(coords.filtered,'./data/DCC-filtered-data.csv', sep=',',
 
 ```{r summary-conv-stats, warning = FALSE, error = FALSE, message = FALSE}
 
-# read in the conversation data 
+# read in the conversation data
 coords.filtered = read.table('./data/DCC-filtered-data.csv', sep=',',header=TRUE)
 
 # identify the maximum time for each dyad
@@ -268,7 +270,7 @@ ggsave(plot = recorded.lengths,
        width = 3,
        dpi=100,
        filename = './figures/DCC-recorded_lengths-knitr.jpg')
-  
+
 ```
 
 ![**Figure**. Histogram of all recorded conversation lengths within the dataset.](./figures/DCC-recorded_lengths-knitr.jpg)
@@ -285,7 +287,7 @@ ggsave(plot = recorded.lengths,
 
 This section clears the workspace and reads in the prepared data files.
 
-```{r recurrence-prelims, warning = FALSE, error = FALSE, message = FALSE}
+```{r recurrence-prelims, warning = FALSE, error = FALSE, message = FALSE, eval = FALSE}
 
 # clear our workspace
 rm(list=ls())
@@ -320,7 +322,7 @@ source('./supplementary-code/continuous_rqa_parameters-DCC.r')
 ```{r ready-for-crqa-drps, eval=FALSE}
 
 # read in our chosen parameters
-crqa_params = read.table('./data/crqa_data_and_parameters-DCC.csv', 
+crqa_params = read.table('./data/crqa_data_and_parameters-DCC.csv',
                          sep=',',header=TRUE)
 
 # grab only the parameters we need
@@ -341,7 +343,7 @@ coords_crqa = plyr::join(x=crqa_params,y=coords_crqa,
                               'conv.num'='conv.num'))
 
 # slice up the data so that we have one dataset per conversation
-split_convs = split(coords_crqa, 
+split_convs = split(coords_crqa,
                     list(coords_crqa$dyad, coords_crqa$conv.num))
 
 ```
@@ -404,19 +406,19 @@ for (next_conv in split_convs){
                                 rec_analysis[1:9]))
   names(next_data_line) = c("dyad",'conv.type',names(rec_analysis[1:9]))
   crqa_results = rbind.data.frame(crqa_results,next_data_line)
-  
+
   # recreate DRP from diagonal lines within our target window
   diag_lines = spdiags(rec_analysis$RP)
   subset_plot = data.frame(diag_lines$B[,diag_lines$d >= -win_size & diag_lines$d <= win_size])
   rr = colSums(subset_plot)/dim(subset_plot)[1]
-  
+
   # convert to dataframe, padding (with 0) where no RR was observed (since `spdiags` returns only nonzero vectors)
   next_drp = full_join(data.frame(lag = as.integer(str_replace(names(rr),'X',''))-51,
                                   rr = rr),
-                       data.frame(lag = -win_size:win_size), 
+                       data.frame(lag = -win_size:win_size),
                        by='lag')
   next_drp[is.na(next_drp)] = 0
-  
+
   # save it to dataframe
   next_drp$dyad = dyad_num
   next_drp$conv.type = unique(next_conv$conv.type)
@@ -466,7 +468,7 @@ Now that we've calculated our CRQA and DRP measures, we're ready to prepare our 
 
 This section clears the workspace and reads in the prepared data files.
 
-```{r prep-prelim, warning=FALSE, error=FALSE, message=FALSE}
+```{r prep-prelim, warning=FALSE, error=FALSE, message=FALSE, eval = FALSE}
 
 # clear our workspace
 rm(list=ls())
@@ -516,17 +518,17 @@ recurrence_df = recurrence_df %>% ungroup() %>%
   mutate(condition = condition-.5) %>%
   mutate(convers = convers-.5) %>%
   mutate(condition.convers = condition * convers) %>%
-  
+
   # first-order polynomials
   mutate(condition.ot1 = condition * ot1) %>%
   mutate(convers.ot1 = convers * ot1) %>%
   mutate(condition.convers.ot1 = condition * convers * ot1) %>%
-  
+
   # second-order polynomials
   mutate(condition.ot2 = condition * ot2) %>%
   mutate(convers.ot2 = convers * ot2) %>%
   mutate(condition.convers.ot2 = condition * convers * ot2) %>%
-  
+
   # polynomial interactions
   mutate(ot1.ot2 = ot1 * ot2) %>%
   mutate(condition.ot1.ot2 = condition * ot1 * ot2) %>%
@@ -596,30 +598,139 @@ We now create a linear mixed-effects model to gauge how linear lag (`ot1`) and q
 
 ```{r central-model, warning=FALSE, error=FALSE, message=FALSE}
 
-# standardized model
+# standardized maximal random-effects model
 rec_convers_condition_gca_st = lmer(rr ~ convers + condition + ot1 + ot2 +
-                                      condition.convers + ot1.ot2 +
-                                      convers.ot1 + condition.ot1 + condition.convers.ot1 +
-                                      convers.ot2 + condition.ot2 + condition.convers.ot2 +
-                                      convers.ot1.ot2 + condition.ot1.ot2 + condition.convers.ot1.ot2 +
-                                      (1 + ot1 + ot2 + convers + condition.convers.ot1 | conv.num) + 
-                                      (1 + ot1 + ot2 + convers + condition.convers.ot1 | dyad), 
-                                    data=rec_st,REML=FALSE)
-invisible(pander_lme_to_latex(rec_convers_condition_gca_st,'standardized_model_latex-DCC.tex'))
-pander_lme(rec_convers_condition_gca_st,stats.caption = TRUE)
-
-# raw model
-rec_convers_condition_gca_raw = lmer(rr ~ convers + condition + ot1 + ot2 +
                                        condition.convers + ot1.ot2 +
                                        convers.ot1 + condition.ot1 + condition.convers.ot1 +
                                        convers.ot2 + condition.ot2 + condition.convers.ot2 +
                                        convers.ot1.ot2 + condition.ot1.ot2 + condition.convers.ot1.ot2 +
                                        (1 + ot1 + ot2 + convers + condition.convers.ot1 | conv.num) + 
-                                       (1 + ot1 + ot2 + convers + condition.convers.ot1 | dyad), 
-                                     data=rec_plot,REML=FALSE)
+                                       (1 + ot1 + ot2 + convers + condition.convers.ot1 | dyad), data=rec_st, REML=FALSE)
+invisible(pander_lme_to_latex(rec_convers_condition_gca_st,'standardized_model_latex-DCC.tex'))
+pander_lme(rec_convers_condition_gca_st,stats.caption = TRUE)
+
+# raw maximal random-effects model
+rec_convers_condition_gca_raw = lmer(rr ~ convers + condition + ot1 + ot2 +
+                                       condition.convers + ot1.ot2 +
+                                       convers.ot1 + condition.ot1 + condition.convers.ot1 +
+                                       convers.ot2 + condition.ot2 + condition.convers.ot2 +
+                                       convers.ot1.ot2 + condition.ot1.ot2 + condition.convers.ot1.ot2 +
+                                       (1 + ot1 + ot2 + convers + condition.convers.ot1 | conv.num) +
+                                       (1 + ot1 + ot2 + convers + condition.convers.ot1 | dyad), data=rec_plot,REML=FALSE)
 pander_lme(rec_convers_condition_gca_raw,stats.caption = TRUE)
 
 ```
+
+***
+
+### Comparing maximal random-effects model to random-intercepts-only model
+
+We next check whether our maximal random-effects model (above) provides a better fit to the data than a model with only random intercepts for `dyad` and `conv.num` that is otherwise identical. We present analyses of both standardized and raw datasets.
+
+The maximal random-effects model (i.e., that with maximally permissible random slopes for random intercepts of `dyad` and `conv.num`  using backwards selection; cf. Barr et al., 2013, *Journal of Memory and Language*) accounts for significantly more of the data than the random-intercept-only model. Plots of the residuals of both maximal and random-intercepts-only models demonstrate that the maximal model better meets the assumptions of homogeneity and normality of residuals than the random-intercepts-only model.
+
+```{r checking-maximal-standardized, warning=FALSE, error=FALSE, message=FALSE}
+
+# standardized random-intercepts-only model
+rec_convers_condition_gca_st_rio = lmer(rr ~ convers + condition + ot1 + ot2 +
+                                      condition.convers + ot1.ot2 +
+                                      convers.ot1 + condition.ot1 + condition.convers.ot1 +
+                                      convers.ot2 + condition.ot2 + condition.convers.ot2 +
+                                      convers.ot1.ot2 + condition.ot1.ot2 + condition.convers.ot1.ot2 +
+                                      (1 | conv.num) + (1 | dyad), data=rec_st, REML=FALSE)
+
+# is the maximal random-effects model a better fit than the random-intercepts-only model? (standardized)
+pander_anova(anova(rec_convers_condition_gca_st_rio,rec_convers_condition_gca_st,test="Chisq"))
+
+```
+
+```{r checking-maximal-raw, warning=FALSE, error=FALSE, message=FALSE}
+# raw random-intercepts-only model
+rec_convers_condition_gca_raw_rio = lmer(rr ~ convers + condition + ot1 + ot2 +
+                                       condition.convers + ot1.ot2 +
+                                       convers.ot1 + condition.ot1 + condition.convers.ot1 +
+                                       convers.ot2 + condition.ot2 + condition.convers.ot2 +
+                                       convers.ot1.ot2 + condition.ot1.ot2 + condition.convers.ot1.ot2 +
+                                       (1 | conv.num) +
+                                       (1 | dyad),
+                                     data=rec_plot,REML=FALSE)
+
+# is the maximal random-effects model a better fit than the random-intercepts-only model? (raw)
+pander_anova(anova(rec_convers_condition_gca_raw_rio,rec_convers_condition_gca_raw,test='Chisq'))
+
+```
+
+```{r plot-standardized-residuals, eval=FALSE, echo=FALSE}
+
+# plot residuals for random-intercepts-only model
+rio_residuals = qplot(x = fitted(rec_convers_condition_gca_st_rio), 
+                      y = resid(rec_convers_condition_gca_st_rio)) +
+  geom_hline(aes(yintercept=0)) + geom_smooth() + 
+  scale_color_viridis() +
+  coord_cartesian(xlim = c(-3,3), ylim = c(-2,3)) +
+  ylab('Residuals') + xlab('Fitted') + ggtitle('Random-Intercepts-Only')
+
+# plot residuals for maximal model
+max_residuals = qplot(x = fitted(rec_convers_condition_gca_st), 
+                      y = resid(rec_convers_condition_gca_st)) +
+  geom_hline(aes(yintercept=0)) + geom_smooth() + coord_cartesian(xlim = c(-3,3), ylim = c(-2,3)) +
+  ylab('Residuals') + xlab('Fitted') + ggtitle('Maximal')
+
+# plot and save
+ggsave('./figures/DCC-standardized_residuals_plot.png',
+       units = "in", width = 5, height = 3, dpi=100,
+       grid.arrange(
+         top=textGrob("Homogeneity of Standardized Models",
+                      gp=gpar(fontsize=14)),
+         rio_residuals,
+         max_residuals,
+         nrow = 1
+       ))
+
+```
+
+![**Figure**. Residuals plots using standardized dataset. Residuals are more evenly distributed around 0 for the maximal model (right) than the random-intercepts-only model (left), meeting the assumption of homogeneity of residuals.](./figures/DCC-standardized_residuals_plot.png)
+
+```{r hist-standardized-residuals, eval=FALSE, echo=FALSE}
+
+# set bin width
+bin_width = .1
+y_max = 600
+
+# plot histogram of residuals for random-intercepts-only model
+rio_residuals = qplot(resid(rec_convers_condition_gca_st_rio),
+                      geom='histogram',binwidth=bin_width) +
+  geom_histogram(aes(fill = ..density..),binwidth=bin_width) +
+  ylab('Frequency') + xlab('Residuals') +
+  scale_fill_viridis(discrete=FALSE,name='Density') +
+  coord_cartesian(xlim = c(-2,2), ylim = c(0,y_max)) + 
+  theme(legend.position='bottom') +
+  ggtitle('Random-Intercepts-Only')
+ 
+# plot histogram of residuals maximal model
+max_residuals = qplot(resid(rec_convers_condition_gca_st),
+                      geom='histogram',binwidth=bin_width) +
+  geom_histogram(aes(fill = ..density..),binwidth=bin_width) +
+  ylab('Frequency') + xlab('Residuals') +
+  scale_fill_viridis(discrete=FALSE,name='Density') +
+  coord_cartesian(xlim = c(-2,2), ylim = c(0,y_max)) + 
+  theme(legend.position='bottom') +
+  ggtitle('Maximal')
+
+# plot and save
+ggsave('./figures/DCC-standardized_residuals_hist.png',
+       units = "in", width = 6, height = 3, dpi=100,
+       grid.arrange(
+         top=textGrob("Normality of Standardized Models",
+                      gp=gpar(fontsize=14)),
+         rio_residuals,
+         max_residuals,
+         nrow = 1
+       ))
+
+```
+
+![**Figure**. Frequency density plots of residuals using standardized dataset. Residuals for the maximal model (right) are more normally distributed than the random-intercepts-only model (left), meeting the assumption of normality of residuals.](./figures/DCC-standardized_residuals_hist.png)
 
 ***
 
@@ -664,20 +775,20 @@ Do we still see significant differences by condition in each conversation?
 ```{r aff-post-hoc-test}
 
 # check for differences in the friendly conversation (raw)
-cond_aff_gca_raw = lmer(rr ~ condition + 
+cond_aff_gca_raw = lmer(rr ~ condition +
                       ot1 + ot2 + ot1.ot2 +
                       condition.ot1 + condition.ot2 + condition.ot1.ot2 +
-                      (1 + ot1 + ot2 + condition | conv.num) + 
-                      (1 + ot1 + ot2 + condition | dyad), 
+                      (1 + ot1 + ot2 + condition | conv.num) +
+                      (1 + ot1 + ot2 + condition | dyad),
                     data=aff_only_raw,REML=FALSE)
 pander_lme(cond_aff_gca_raw, stats.caption=TRUE)
 
 # check for differences in the friendly conversation (standardized)
-cond_aff_gca_st = lmer(rr ~ condition + 
+cond_aff_gca_st = lmer(rr ~ condition +
                       ot1 + ot2 + ot1.ot2 +
                       condition.ot1 + condition.ot2 + condition.ot1.ot2 +
-                      (1 + ot1 + ot2 + condition | conv.num) + 
-                      (1 + ot1 + ot2 + condition | dyad), 
+                      (1 + ot1 + ot2 + condition | conv.num) +
+                      (1 + ot1 + ot2 + condition | dyad),
                     data=aff_only_st,REML=FALSE)
 pander_lme(cond_aff_gca_st, stats.caption=TRUE)
 
@@ -686,20 +797,20 @@ pander_lme(cond_aff_gca_st, stats.caption=TRUE)
 ```{r arg-post-hoc-test}
 
 # check for differences in the argumentative conversation (raw)
-cond_arg_gca_raw = lmer(rr ~ condition + 
+cond_arg_gca_raw = lmer(rr ~ condition +
                       ot1 + ot2 + ot1.ot2 +
                       condition.ot1 + condition.ot2 + condition.ot1.ot2 +
-                      (1 + ot1 + ot2 + condition | conv.num) + 
-                      (1 + ot1 + ot2 + condition | dyad), 
+                      (1 + ot1 + ot2 + condition | conv.num) +
+                      (1 + ot1 + ot2 + condition | dyad),
                     data=arg_only_raw,REML=FALSE)
 pander_lme(cond_arg_gca_raw, stats.caption=TRUE)
 
 # check for differences in the argumentative conversation (standardized)
-cond_arg_gca_st = lmer(rr ~ condition + 
+cond_arg_gca_st = lmer(rr ~ condition +
                       ot1 + ot2 + ot1.ot2 +
                       condition.ot1 + condition.ot2 + condition.ot1.ot2 +
-                      (1 + ot1 + ot2 + condition | conv.num) + 
-                      (1 + ot1 + ot2 + condition | dyad), 
+                      (1 + ot1 + ot2 + condition | conv.num) +
+                      (1 + ot1 + ot2 + condition | dyad),
                     data=arg_only_st,REML=FALSE)
 pander_lme(cond_arg_gca_st, stats.caption=TRUE)
 
@@ -711,11 +822,11 @@ pander_lme(cond_arg_gca_st, stats.caption=TRUE)
 
 The model's results indeed suggest that high- and low-level constraints influence coordination dynamics. We again saw that participants tend to be coordinated overall, although with a slight leading/following pattern (`ot1.ot2`). Extending previous findings with gross body movements in another naturalistic interaction corpus (Paxton & Dale, 2013, *Quarterly Journal of Experimental Psychology*), we here found that argument decreases interpersonal synchrony (`convers`). Conversation type also influenced the dynamics of coordination: Recurrence during the affiliative conversations was higher but more diffuse, while recurrence in the argumentative conversation was lower but more peaked (`convers.ot1.ot2`; trend for `convers.ot2`).
 
-Interestingly, although we hypothesized that the noise condition would increase coordination compared to a dual-task condition, we did not find a simple effect of condition (`condition`). Instead, condition affected the dynamics of coordination. Participants in the noise condition appeared to show a more iconic quadratic pattern (more greater temporal coupling) than those in the dual-task condition (`condition.ot1.ot2`), although the dual-task condition's coupling was more peaked around lag-0. 
+Interestingly, although we hypothesized that the noise condition would increase coordination compared to a dual-task condition, we did not find a simple effect of condition (`condition`). Instead, condition affected the dynamics of coordination. Participants in the noise condition appeared to show a more iconic quadratic pattern (more greater temporal coupling) than those in the dual-task condition (`condition.ot1.ot2`), although the dual-task condition's coupling was more peaked around lag-0.
 
 We also found a complex, four-way interaction among predictors (`condition.convers.ot1.ot2`).  In our separate follow-up analyses of each conversation type, movement remained significantly coordinated (`ot1.ot2`), and the three-way interaction among condition, LL, and QL (`condition.ot1.ot2`) were also still significant. However, we did not see a main effect of condition, reinforcing the idea that condition is influencing the dynamics or *unfolding* of the coordination.
 
-Taken together, we view our results as consistent with the growing view of interpersonal communication as a complex dynamical system. 
+Taken together, we view our results as consistent with the growing view of interpersonal communication as a complex dynamical system.
 
 ***
 
@@ -770,7 +881,7 @@ noise_plot_legend = ggplot(noise_data,
 
 # create a master legend
 master_legend = gtable_filter(ggplot_gtable(
-  ggplot_build(noise_plot_legend + theme(legend.position="bottom"))), 
+  ggplot_build(noise_plot_legend + theme(legend.position="bottom"))),
   "guide-box")
 
 # save to file for manuscript submission
@@ -801,7 +912,7 @@ ggsave('./figures/DCC-interaction-RR_lag_conversation_condition-knitr.png',
 
 ![**Figure**. Effects of conversation type (affiliative/argumentative), condition (dual-task/noise), and lag (±5 seconds at 10 Hz) on RR.](./figures/DCC-interaction-RR_lag_conversation_condition-knitr.png)
 
-*** 
+***
 
 ```{r plot-all-drps, eval=FALSE, echo=FALSE}
 
@@ -811,20 +922,20 @@ noise_data = condition_dfs[[1]]
 dual_task_data = condition_dfs[[2]]
 
 # reorder dyads by rr at lag-0 in affiliative conversation
-dual_task_data$sorted_dyad = with(dual_task_data, 
-                                  reorder(dyad, 
+dual_task_data$sorted_dyad = with(dual_task_data,
+                                  reorder(dyad,
                                           rr[ifelse(lag == 0, TRUE, NA) &
                                                ifelse(convers > 0, TRUE, NA)],
                                           mean, na.rm = TRUE))
-noise_data$sorted_dyad = with(noise_data, 
-                              reorder(dyad, 
+noise_data$sorted_dyad = with(noise_data,
+                              reorder(dyad,
                                       rr[ifelse(lag == 0, TRUE, NA) &
                                            ifelse(convers > 0, TRUE, NA)],
                                       mean, na.rm = TRUE))
 
 # plot for noise condition
-noise_plot = ggplot(data = noise_data, aes(x = lag, y = rr, 
-                              color=as.factor(convers))) + 
+noise_plot = ggplot(data = noise_data, aes(x = lag, y = rr,
+                              color=as.factor(convers))) +
   facet_wrap(~sorted_dyad) + geom_smooth() + geom_line() +
   scale_colour_manual(values=c("chartreuse4","red2"),
                       breaks=c(min(c(noise_data$convers,
@@ -839,10 +950,10 @@ noise_plot = ggplot(data = noise_data, aes(x = lag, y = rr,
   ggtitle('Noise Condition') +
   ylab(' ') + xlab('Lag (10Hz)')
   stat_smooth()
-  
+
 # plot for dual-task condition
-dual_task_plot = ggplot(data = dual_task_data, aes(x = lag, y = rr, 
-                                  color=as.factor(convers))) + 
+dual_task_plot = ggplot(data = dual_task_data, aes(x = lag, y = rr,
+                                  color=as.factor(convers))) +
   facet_wrap(~sorted_dyad) + geom_smooth() + geom_line() +
   scale_colour_manual(values=c("chartreuse4","red2"),
                       breaks=c(min(c(noise_data$convers,
@@ -874,7 +985,7 @@ noise_plot_legend = ggplot(noise_data,
 
 # create a master legend
 master_legend = gtable_filter(ggplot_gtable(
-  ggplot_build(noise_plot_legend + theme(legend.position="bottom"))), 
+  ggplot_build(noise_plot_legend + theme(legend.position="bottom"))),
   "guide-box")
 
 # save to file for manuscript submission
