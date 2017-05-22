@@ -3,30 +3,43 @@
 # This script loads libraries and creates a number of 
 # additional functions to facilitate data prep and analysis.
 #
+# The script `required_packages-DCC.r` should be run once first
+# to ensure that the all required packages have been installed.
+#
 # Written by: A. Paxton (University of California, Berkeley)
-# Date last modified: 6 February 2017
+# Date last modified: 16 April 2017
 #####################################################################################
 
-#### Load necessary libraries ####
-library(signal)
-library(lme4)
-library(TTR)
-library(ggplot2)
-library(languageR)
-library(crqa)
-library(plyr)
-library(dplyr)
-#library(tseriesChaos)
-library(pander)
-#library(reshape2)
-library(purrr)
-library(pander)
-library(gridExtra)
-library(plotrix)
-library(gtable)
-library(e1071)
-library(data.table)
-library(viridis)
+#### Load necessary packages ####
+
+# list of required packages
+required_packages = c(
+  'signal',
+  'lme4',
+  'TTR',
+  'ggplot2',
+  'languageR',
+  'crqa',
+  'plyr',
+  'pander',
+  'purrr',
+  'pander',
+  'gridExtra',
+  'plotrix',
+  'gtable',
+  'e1071',
+  'data.table',
+  'viridis',
+  'magrittr',
+  'dplyr'
+)
+
+# load required packages
+invisible(lapply(required_packages, require, character.only = TRUE))
+
+#### Set universal variables ####
+
+sampling_rate = 10
 
 #### Create functions we'll need ####
 
@@ -324,3 +337,4 @@ pander_anova = function(anova_model_name){
   # return the neatened table
   return(pander(neat_output, style="rmarkdown",split.table = Inf))
 }
+
