@@ -1,6 +1,6 @@
 ---
 title: "High- and Low-Level Constraints on Coordination during Conversation: Code for Paxton & Dale (under review)"
-output: 
+output:
   html_document:
     number_sections: true
     keep_md: true
@@ -11,14 +11,14 @@ This R markdown provides the basis for our manuscript, "Interpersonal movement s
 To run these analyses from scratch, you will need the following files:
 
 * `./data/prepped_data-DCC.csv`: Contains experimental data. All data for included dyads are freely available in the OSF repository for the project: `https://osf.io/x9ay6/`.
-* `./supplementary-code/required_packages-DCC.r`: Installs required libraries, if they are not already installed. (This should be run *before* running this Rmarkdown file.)
+* `./supplementary-code/required_packages-DCC.r`: Installs required libraries, if they are not already installed. **NOTE**: This should be run *before* running this script.
 * `./supplementary-code/libraries_and_functions-DCC.r`: Loads in necessary libraries and creates new functions for our analyses.
 * `./supplementary-code/continuous_rqa_parameters-DCC.r`: Identifies the appropriate parameters for continuous cross-recurrence quantification analysis (CRQA).
 
 Additional files will be created during the initial run that will help reduce processing time. Several of these files--including the chosen CRQA parameters, the final plotting dataframe, and the final analysis dataframe---are available as CSVs from the OSF repository listed above.
 
 **Written by**: A. Paxton (University of California, Berkeley) and R. Dale (University of California, Merced)
-<br>**Date last modified**: 22 May 2017
+<br>**Date last modified**: 14 June 2017
 
 ***
 
@@ -84,18 +84,18 @@ coords = coords %>% ungroup() %>%
   mutate(euclid_accel = signal::filtfilt(post_downsample_butter, euclid_accel)) # filter
 
 # isolate participants' time series within each dyad
-p0 = coords %>% ungroup() %>% 
-  dplyr::filter(partic == 0) %>% 
+p0 = coords %>% ungroup() %>%
+  dplyr::filter(partic == 0) %>%
   select(-partic) %>%
   dplyr::rename(euclid0 = euclid_accel)
-p1 = coords %>% ungroup() %>% 
-  dplyr::filter(partic == 1) %>% 
+p1 = coords %>% ungroup() %>%
+  dplyr::filter(partic == 1) %>%
   select(-partic) %>%
   dplyr::rename(euclid1 = euclid_accel)
 
 # join together the participants' time series, leaving only any overlapping slices
-coords = plyr::join(p0, p1, 
-                    by=c("dyad", "conv.num", "conv.type", "cond", "t"), 
+coords = plyr::join(p0, p1,
+                    by=c("dyad", "conv.num", "conv.type", "cond", "t"),
                     type="inner")
 
 ```
@@ -188,7 +188,7 @@ pander::pander(cor.test(cutoff.points.jounce$t,cutoff.points.jerk$t),
 ```{r plot-jounce-and-jerk, echo=FALSE, fig.width=3, fig.height=3, fig.align='center', eval = FALSE}
 
 # create the plot
-jounce.v.jerk = qplot(x = cutoff.points.jounce$t, 
+jounce.v.jerk = qplot(x = cutoff.points.jounce$t,
                       y = cutoff.points.jerk$t) +
   xlab('Jounce') + ylab('Jerk') +
   ggtitle('Relation of Jerk and Jounce') +
@@ -227,12 +227,12 @@ if( conservative_jerk >= conservative_jounce ){
 
 # merge with the rest of the dataframe, trim instruction period, drop unneded variables, and filter
 coords.trimmed = coords.deriv %>% ungroup() %>%
-  merge(., cutoff.points, 
+  merge(., cutoff.points,
         by = c('dyad','conv.num','conv.type','cond')) %>%
   group_by(dyad, conv.num, conv.type, cond) %>%
   dplyr::filter(t > unique(cutoff.t)) %>%
-  select(-one_of('cutoff.t','cutoff'), 
-         -matches('jerk'), 
+  select(-one_of('cutoff.t','cutoff'),
+         -matches('jerk'),
          -matches('jounce'))
 
 ```
@@ -260,6 +260,7 @@ What do the final data look like (after trimming the calibration period)?
 coords.trimmed = read.table('./data/DCC-trimmed-data.csv', sep=',',header=TRUE)
 
 ```
+
 
 ```{r summary-conv-stats}
 
@@ -384,7 +385,7 @@ split_convs = split(coords_crqa,
 
 ## Run CRQA and DRPs
 
-Now that we have our parameters, we run continuous CRQA over each conversation for each dyad using the `crqa` function from the `crqa` package (Coco & Dale, 2014, *Frontiers in Psychology*). This again produces output that can be useful for tracking progress, but we supress these messages for brevity.
+Now that we have our parameters, we run continuous CRQA over each conversation for each dyad using the `crqa` function from the `crqa` package (Coco & Dale, 2014, *Frontiers in Psychology*). This produces output that can be useful for tracking progress, but we suppress these messages for brevity.
 
 ```{r run-crqa-using-parameters, eval = FALSE}
 
@@ -396,31 +397,31 @@ win_size = target_seconds * sampling_rate
 drp_results = data.frame()
 crqa_results = data.frame()
 for (next_conv in split_convs){
-  
+
   # isolate parameters for this next dyad
   chosen.delay = unique(next_conv$chosen.delay)
   chosen.embed = unique(next_conv$chosen.embed)
   chosen.radius = unique(next_conv$chosen.radius)
-  
+
   # # print update
   # print(paste("CRQA: Dyad ", unique(next_conv$dyad),
   #             ", conversation ",unique(next_conv$conv.num),
   #             sep=""))
-  
+
   # run cross-recurrence
   rec_analysis = crqa(ts1=next_conv$rescale.euclid0,
                       ts2=next_conv$rescale.euclid1,
                       delay=chosen.delay,
                       embed=chosen.embed,
                       r=chosen.radius,
-                      normalize=0, 
-                      rescale=0, 
+                      normalize=0,
+                      rescale=0,
                       mindiagline=2,
-                      minvertline=2, 
-                      tw=0, 
+                      minvertline=2,
+                      tw=0,
                       whiteline=FALSE,
                       recpt=FALSE)
-  
+
   # save plot-level information to dataframe
   dyad_num = unique(next_conv$dyad)
   next_data_line = data.frame(c(dyad_num,
@@ -626,8 +627,8 @@ rec_convers_condition_gca_st = lmer(rr ~ convers + condition + ot1 + ot2 +
                                        convers.ot1 + condition.ot1 + condition.convers.ot1 +
                                        convers.ot2 + condition.ot2 + condition.convers.ot2 +
                                        convers.ot1.ot2 + condition.ot1.ot2 + condition.convers.ot1.ot2 +
-                                       (1 + ot1 + ot2 + convers + condition.convers.ot1 | conv.num) + 
-                                       (1 + ot1 + ot2 + convers + condition.convers.ot1 | dyad), 
+                                       (1 + ot1 + ot2 + convers + condition.convers.ot1 | conv.num) +
+                                       (1 + ot1 + ot2 + convers + condition.convers.ot1 | dyad),
                                     data=rec_st, REML=FALSE)
 invisible(pander_lme_to_latex(rec_convers_condition_gca_st,'standardized_model_latex-DCC.tex'))
 pander_lme(rec_convers_condition_gca_st,stats.caption = TRUE)
@@ -686,18 +687,18 @@ pander_anova(anova(rec_convers_condition_gca_raw_rio,rec_convers_condition_gca_r
 ```{r plot-standardized-residuals, echo=FALSE, eval = FALSE}
 
 # plot residuals for random-intercepts-only model
-rio_residuals = qplot(x = fitted(rec_convers_condition_gca_st_rio), 
+rio_residuals = qplot(x = fitted(rec_convers_condition_gca_st_rio),
                       y = resid(rec_convers_condition_gca_st_rio)) +
-  geom_hline(aes(yintercept=0)) + geom_smooth() + 
+  geom_hline(aes(yintercept=0)) + geom_smooth() +
   scale_color_viridis() +
-  coord_cartesian(xlim = c(-4,4), ylim = c(-2,2.5)) +
+  coord_cartesian(xlim = c(-4,4), ylim = c(-2,3)) +
   ylab('Residuals') + xlab('Fitted') + ggtitle('Random-Intercepts-Only')
 
 # plot residuals for maximal model
-max_residuals = qplot(x = fitted(rec_convers_condition_gca_st), 
+max_residuals = qplot(x = fitted(rec_convers_condition_gca_st),
                       y = resid(rec_convers_condition_gca_st)) +
-  geom_hline(aes(yintercept=0)) + geom_smooth() + 
-  coord_cartesian(xlim = c(-4,4), ylim = c(-2,2.5)) +
+  geom_hline(aes(yintercept=0)) + geom_smooth() +
+  coord_cartesian(xlim = c(-4,4), ylim = c(-2,3)) +
   ylab('Residuals') + xlab('Fitted') + ggtitle('Maximal')
 
 # plot and save
@@ -727,17 +728,17 @@ rio_residuals = qplot(resid(rec_convers_condition_gca_st_rio),
   geom_histogram(aes(fill = ..density..),binwidth=bin_width) +
   ylab('Frequency') + xlab('Residuals') +
   scale_fill_viridis(discrete=FALSE,name='Density') +
-  coord_cartesian(xlim = c(-3,3), ylim = c(0,y_max)) + 
+  coord_cartesian(xlim = c(-3,3), ylim = c(0,y_max)) +
   theme(legend.position='bottom') +
   ggtitle('Random-Intercepts-Only')
- 
+
 # plot histogram of residuals maximal model
 max_residuals = qplot(resid(rec_convers_condition_gca_st),
                       geom='histogram',binwidth=bin_width) +
   geom_histogram(aes(fill = ..density..),binwidth=bin_width) +
   ylab('Frequency') + xlab('Residuals') +
   scale_fill_viridis(discrete=FALSE,name='Density') +
-  coord_cartesian(xlim = c(-3,3), ylim = c(0,y_max)) + 
+  coord_cartesian(xlim = c(-3,3), ylim = c(0,y_max)) +
   theme(legend.position='bottom') +
   ggtitle('Maximal')
 
@@ -852,13 +853,9 @@ To explore how these patterns differ from the amount of coordination that might 
 
 ## Surrogate data preparation
 
-**NOTE**: The chunks of code in this section do not have to be run each time, since the resulting datasets will be saved to CSV files. As a result, these chunks are currently set to `eval=FALSE`. Bear this in mind if these data need to be re-calculated.
-
 ***
 
 ### Preliminaries
-
-This section clears the workspace and reads in the prepared data files.
 
 ```{r surrogate-prep-prelim, warning=FALSE, error=FALSE, message=FALSE, eval = FALSE}
 
@@ -879,7 +876,7 @@ crqa_params = read.table('./data/crqa_data_and_parameters-DCC.csv',
 
 ### Load CRQA parameters
 
-Let's load in the CRQA parameters specified for the real data and prepare for CRQA.
+Load in the CRQA parameters specified for the real data and prepare the dataset for analysis.
 
 ```{r surrogate-prep-for-crqa-drps, eval = FALSE}
 
@@ -911,7 +908,7 @@ split_convs = split(coords_crqa,
 
 ### Calculate CRQA and DRPs for surrogate data
 
-Just as with the real data, we run continuous CRQA over each conversation of each dyad with the selected parameters using the `crqa` function from the `crqa` package (Coco & Dale, 2014, *Frontiers in Psychology*). Again, this includes code to print out updates, but we suppress them for brevity.
+We create surrogate movement data for each participant through phase-randomization, implemented using the `FFTsurrogate` function in the `nonlinearTseries` package. We then calculate CRQA over those surrogate data in order to create a baseline value of synchrony between participants.
 
 ```{r surrogate-crqa-calculation, eval = FALSE}
 
@@ -931,18 +928,13 @@ for (next_conv in split_convs){
   chosen.radius = unique(next_conv$chosen.radius)
   dyad_num = unique(next_conv$dyad)
 
-  # # print update
-  # print(paste("Surrogate CRQA: Dyad ", unique(next_conv$dyad),
-  #             ", conversation ",unique(next_conv$conv.num),
-  #             sep=""))
-
-  # re-shuffle the surrogate dyad and run again
+  # re-create the surrogate dyad and run again
   for (run in 1:10){
 
-    # shuffle time series
-    shuffle0 = base::sample(next_conv$rescale.euclid0,replace=FALSE)
-    shuffle1 = base::sample(next_conv$rescale.euclid1,replace=FALSE)
-    
+    # create phase-randomized baseline for each participant
+    shuffle0 = nonlinearTseries::FFTsurrogate(next_conv$rescale.euclid0, n.samples = 1)
+    shuffle1 = nonlinearTseries::FFTsurrogate(next_conv$rescale.euclid1, n.samples = 1)
+
     # run cross-recurrence
     rec_analysis = crqa(ts1=shuffle0,
                         ts2=shuffle1,
@@ -1002,9 +994,7 @@ surrogate_recurrence_df = plyr::join(recurrence_results, additional_dyad_info,
 
 ***
 
-### Create first- and second-order polynomials for surrogate data
-
-As with the real data, we create first- and second-order orthogonal polynomials for the lag term. 
+### Create polynomials and center binary variables for surrogate data
 
 ```{r surrogate-polynomials, eval = FALSE}
 
@@ -1016,59 +1006,24 @@ t = stats::poly((raw_lag + lag_offset), 2)
 lag_vals[, paste("ot", 1:2, sep="")] = t[lag_vals$raw_lag + lag_offset, 1:2]
 
 # join it to the original data table
-surrogate_recurrence_df = left_join(surrogate_recurrence_df,lag_vals, by = c("lag" = "raw_lag"))
-
-```
-
-***
-
-### Create surrogate interaction terms and standardized dataframes
-
-As with the real data, we create all appropriate interaction terms and a standardized dataframe.
-
-```{r create-surrogate-interactions, eval = FALSE}
-
-# rename variables and center the binary variables
-surrogate_recurrence_df = surrogate_recurrence_df %>% ungroup() %>%
+surrogate_recurrence_df = left_join(surrogate_recurrence_df,lag_vals, by = c("lag" = "raw_lag")) %>%
+  ungroup() %>%
   plyr::rename(.,
                c("conv.type"="convers",
                  "cond"="condition")) %>%
   mutate(condition = condition-.5) %>%
-  mutate(convers = convers-.5) %>%
-  mutate(condition.convers = condition * convers) %>%
-
-  # first-order polynomials
-  mutate(condition.ot1 = condition * ot1) %>%
-  mutate(convers.ot1 = convers * ot1) %>%
-  mutate(condition.convers.ot1 = condition * convers * ot1) %>%
-
-  # second-order polynomials
-  mutate(condition.ot2 = condition * ot2) %>%
-  mutate(convers.ot2 = convers * ot2) %>%
-  mutate(condition.convers.ot2 = condition * convers * ot2) %>%
-
-  # polynomial interactions
-  mutate(ot1.ot2 = ot1 * ot2) %>%
-  mutate(condition.ot1.ot2 = condition * ot1 * ot2) %>%
-  mutate(convers.ot1.ot2 = convers * ot1 * ot2) %>%
-  mutate(condition.convers.ot1.ot2 = condition * convers * ot1 * ot2)
-
-# create standardized dataframe
-surrogate_rec_st = mutate_each(surrogate_recurrence_df,funs(as.numeric(scale(.))))
+  mutate(convers = convers-.5)
 
 ```
 
 ***
 
-### Export surrogate dataframes
+### Export surrogate dataframe
 
-```{r export-surrogate-dfs, eval = FALSE}
+```{r export-surrogate-df, eval = FALSE}
 
-# export plotting dataframe
+# export dataframe
 write.table(surrogate_recurrence_df,'./data/surrogate_plotting_df-DCC.csv',row.names=FALSE,sep=',')
-
-# export standardized analysis dataframe
-write.table(surrogate_rec_st,'./data/surrogate_analysis_df-DCC.csv',row.names=FALSE,sep=',')
 
 ```
 
@@ -1078,21 +1033,35 @@ write.table(surrogate_rec_st,'./data/surrogate_analysis_df-DCC.csv',row.names=FA
 
 ***
 
-### Create unified dataframe and appropriate interactions
-
-Now that we've created the surrogate dataset, we join it to the real dataset so that we can compare our observed data to what might be expected by chance. We create a new variable `data` to mark whether the row contains real (`data = .5`) or surrogate (`data = -.5`) data and interact it appropriately with other predictors. We then create a standardized dataframe.
+### Preliminaries
 
 ```{r surrogate-analysis-prelim, warning=FALSE, error=FALSE, message=FALSE}
 
-# read in real and surrogate datasets
+# clear our workspace
+rm(list=ls())
+
+# read in libraries and create functions
+source('./supplementary-code/libraries_and_functions-DCC.r')
+
+# read in the raw datasets for real and baseline data
 surrogate_plot = read.table('./data/surrogate_plotting_df-DCC.csv', sep=',', header = TRUE)
 rec_plot = read.table('./data/plotting_df-DCC.csv',sep=',',header=TRUE)
+
+```
+
+***
+
+### Combine real and surrogate data for analysis dataframes
+
+We combine the real data (loaded as `rec_plot`) and the surrogate data (loaded as `surrogate_plot`) into a single dataframe for later analysis. We create a new variable called `data`, which designates whether the data were real (`data = .5`) or phase-randomized baseline (`data = -.5`). We then create all relevant interaction terms and create a standardized dataframe.
+
+```{r surrogate-analysis-interactions}
 
 # label real and surrogate data
 rec_plot$data = .5
 surrogate_plot$data = -.5
 
-# join the two datasets
+# append the two time series
 all_data_plot = rbind.data.frame(rec_plot,dplyr::select(surrogate_plot,-run))
 
 # create interaction terms
@@ -1126,9 +1095,9 @@ all_data_st = mutate_each(all_data_plot,funs(as.numeric(scale(.))))
 
 ***
 
-### Comparing model to baseline
+### Comparing real data to baseline
 
-After analyzing the dynamics of the observed data (Section 4), we now explore how those dynamics differ from those we might expect to see by chance. The models below add `data` as an additional predictor (with all appropriate interactions) and use the most maximal random effects structure justified by the data.
+To see how the real data compare to baseline, we run a model identical to our central analysis (`rec_convers_condition_gca_st` and `rec_convers_condition_gca_raw`) but add in terms to capture whether the data were real or surrogate baseline (i.e., `data` and all relevant interaction terms).
 
 ```{r compare-model-to-baseline, warning=FALSE, error=FALSE, message=FALSE}
 
@@ -1207,6 +1176,8 @@ pander_lme(baseline_comparison_raw,stats.caption=TRUE)
 
 ### Exploring interaction terms
 
+In order to understand the higher-order interactions, we create separate datasets for the friendly and argumentative conversations and then re-run the model as above.
+
 ***
 
 #### Prepare separate datasets for comparison
@@ -1237,18 +1208,23 @@ arg_only_st = arg_only_raw %>%
 
 #### Post-hoc interaction tests
 
-As with the real data, we next examine the interactions by separately analyzing the friendly and argumentative conversations, still including the `data` predictor to compare observed to baseline.
-
 ```{r aff-posthoc-comparison-test}
 
 # check for differences in the friendly conversation (standardized)
 aff_posthoc_comparison_st = lmer(rr ~ data + condition + ot1 + ot2
-                              + data.ot1 + data.ot2 + data.condition
-                              + condition.ot1 + condition.ot2 + data.condition.ot1 
-                              + data.condition.ot2 + ot1.ot2 + data.ot1.ot2
-                              + condition.ot1.ot2 + data.condition.ot1.ot2
-                              + (1 + ot1 | conv.num)
-                              + (1 + ot1 + data + condition + data.ot2 + data.condition | dyad),
+                              + data.ot1
+                              + data.ot2
+                              + data.condition
+                              + condition.ot1
+                              + data.condition.ot1
+                              + condition.ot2
+                              + data.condition.ot2
+                              + ot1.ot2
+                              + data.ot1.ot2
+                              + condition.ot1.ot2
+                              + data.condition.ot1.ot2
+                              + (1 + ot1| conv.num)
+                              + (1 + ot1+ data + condition + data.ot2 | dyad),
                               data = aff_only_st,
                               REML = FALSE)
 invisible(pander_lme_to_latex(aff_posthoc_comparison_st,'aff_posthoc_comparison_latex-DCC.tex'))
@@ -1256,10 +1232,17 @@ pander_lme(aff_posthoc_comparison_st,stats.caption=TRUE)
 
 # check for differences in the friendly conversation (raw)
 aff_posthoc_comparison_raw = lmer(rr ~ data + condition + ot1 + ot2
-                              + data.ot1 + data.ot2 + data.condition
-                              + condition.ot1 + condition.ot2 + data.condition.ot1 
-                              + data.condition.ot2 + ot1.ot2 + data.ot1.ot2
-                              + condition.ot1.ot2 + data.condition.ot1.ot2
+                              + data.ot1
+                              + data.ot2
+                              + data.condition
+                              + condition.ot1
+                              + data.condition.ot1
+                              + condition.ot2
+                              + data.condition.ot2
+                              + ot1.ot2
+                              + data.ot1.ot2
+                              + condition.ot1.ot2
+                              + data.condition.ot1.ot2
                               + (1 + ot1 | conv.num)
                               + (1 + ot1 + data + condition + data.ot2 + data.condition | dyad),
                               data = aff_only_raw,
@@ -1315,13 +1298,9 @@ pander_lme(arg_posthoc_comparison_raw,stats.caption=TRUE)
 
 # Discussion
 
-Our results indeed suggest that high- and low-level constraints influence coordination dynamics. Unexpectedly, we saw that participants did not exhibit time-locked head movement synchrony overall in the presence of these additional constraints on the interaction (`ot2`); instead, participants' head movements were organized in turn-taking patterns (i.e., time-lagged synchrony; Butler, 2011, *Personality and Social Psychology Review*). 
+The model's results indeed suggest that high- and low-level constraints influence coordination dynamics. Unexpectedly, we saw that participants did not exhibit time-locked head movement synchrony overall in the presence of these additional constraints on the interaction. Extending previous findings with gross body movements in another naturalistic interaction corpus (Paxton & Dale, 2013, *Quarterly Journal of Experimental Psychology*), we here found that argument decreases interpersonal synchrony.
 
-Extending previous findings with gross body movements in another naturalistic interaction corpus (Paxton & Dale, 2013, *Quarterly Journal of Experimental Psychology*), we again found that argument decreased interpersonal synchrony (`convers`) and exhibited a much more dramatic turn-taking pattern than observed in friendly conversations (`conver.ot2`). Interestingly, these patterns were quite similar to those observed in our analysis of speech patterns (Paxton & Dale, 2013, *Proceedings of the Cognitive Science Society*), perhaps suggesting that head movement patterns (as measured in the current analyses) may be influenced by speaking. 
-
-Although we hypothesized that the noise condition would increase coordination compared to a dual-task condition, we did not find a simple effect of condition (`condition`). Instead, condition affected the dynamics of coordination in conjunction with high-level contextual pressures (`condition.convers.ot2`). Specifically, arguing dyads in the dual-task condition produced much stronger turn-taking patterns than observed during other conditions.
-
-Our previous analysis of overall body movement showed that coordination during friendly conversations was significantly higher than chance while coordination during arguments did not significantly differ from chance (Paxton & Dale, 2013, *Quarterly Journal of Experimental Psychology*). Here, however, we found that head movement coordination during friendly conversations did not significantly differ from chance and that coordination during arguments was significantly *lower* than chance.
+Interestingly, although we hypothesized that the noise condition would increase coordination compared to a dual-task condition, we did not find a simple effect of condition. Instead, condition affected the dynamics of coordination in a three-way interaction among conversation type, condition, and the quadratic term. In both conditions, affiliative conversations induced relatively flat coordination dynamics, although at a rate significanty higher than in arguments. In argument, however, we found very different dynamics by condition: We observed the U-shape characteristic of turn-taking dynamics in the dual-task condition but saw a relatively flat recurrence profile in the noise condition.
 
 Taken together, we view our results as consistent with the growing view of interpersonal communication as a complex dynamical system.
 
@@ -1353,8 +1332,8 @@ dual_task_plot = ggplot(real_dual_task_data,
   stat_smooth() +
   ggtitle('Dual-Task') +
   xlab(paste('Lag (',sampling_rate,' Hz)', sep="")) + ylab('Mean RR') +
-  ylim(c(min(c(real_noise_data$rr,real_dual_task_data$rr)) - .01),
-       max(c(real_noise_data$rr,real_dual_task_data$rr)) + .01) +
+  coord_cartesian(ylim = c(0,
+                           max(c(mean(real_noise_data$rr),mean(real_dual_task_data$rr)))+.03)) +
   geom_smooth(data = surrogate_dual_task_data,
             aes(x = lag,
                 y = rr,
@@ -1373,8 +1352,8 @@ noise_plot = ggplot(real_noise_data,
   ggtitle('Noise') +
   stat_smooth() +
   xlab(paste('Lag (',sampling_rate,' Hz)', sep="")) + ylab('') +
-  ylim(c(min(c(real_noise_data$rr,real_dual_task_data$rr)) - .01),
-         max(c(real_noise_data$rr,real_dual_task_data$rr)) + .01) +
+  coord_cartesian(ylim = c(0,
+                           max(c(mean(real_noise_data$rr),mean(real_dual_task_data$rr)))+.03)) +
   geom_smooth(data = surrogate_noise_data,
             aes(x = lag,
                 y = rr,
@@ -1393,8 +1372,8 @@ noise_plot_legend = ggplot(real_noise_data,
                       labels=c("Affiliative","Argumentative")) +
   ggtitle('Noise') +
   stat_smooth() +
-  ylim(c(min(c(real_noise_data$rr,real_dual_task_data$rr)) - .01),
-         max(c(real_noise_data$rr,real_dual_task_data$rr)) + .01)
+  coord_cartesian(ylim = c(0,
+                           max(c(mean(real_noise_data$rr),mean(real_dual_task_data$rr)))+.03))
 
 # create a master legend
 master_legend = gtable_filter(ggplot_gtable(
@@ -1413,19 +1392,6 @@ ggsave('./figures/DCC-interaction-RR_lag_conversation_condition.png',
          ncol = 2
        ))
 
-# save high-resolution version
-tiff('./figures/DCC-interaction-RR_lag_conversation_condition.tiff',
-       units='in', res = 300, width = 4, height = 5)
-grid.arrange(
-         top=textGrob("Head movement synchrony\nby task and conversation",
-                      gp=gpar(fontsize=14)),
-         dual_task_plot,
-         noise_plot,
-         bottom=master_legend,
-         ncol = 2
-       )
-dev.off()
-
 # save smaller version for knitr
 ggsave('./figures/DCC-interaction-RR_lag_conversation_condition-knitr.png',
        units = "in", width = 4, height = 5, dpi=100,
@@ -1438,9 +1404,22 @@ ggsave('./figures/DCC-interaction-RR_lag_conversation_condition-knitr.png',
          ncol = 2
        ))
 
+# save tiff version
+tiff('./figures/DCC-interaction-RR_lag_conversation_condition.tiff',
+     units = "in", width = 4, height = 5, res=300)
+grid.arrange(
+         top=textGrob("Head movement synchrony\nby task and conversation",
+                      gp=gpar(fontsize=14)),
+         dual_task_plot,
+         noise_plot,
+         bottom=master_legend,
+         ncol = 2
+       )
+dev.off()
+
 ```
 
-![**Figure**. Effects of conversation type (affiliative/argumentative), condition (dual-task/noise), and lag (±5 seconds at 10Hz) on RR. Baseline values (obtained through sample-wise shuffled surrogate analysis) plotted in dashed lines of the appropriate color.](./figures/DCC-interaction-RR_lag_conversation_condition-knitr.png)
+![**Figure**. Effects of conversation type (affiliative/argumentative), condition (dual-task/noise), and lag (±5 seconds) on RR.](./figures/DCC-interaction-RR_lag_conversation_condition-knitr.png)
 
 ***
 
@@ -1478,7 +1457,7 @@ noise_plot = ggplot(data = noise_data, aes(x = lag, y = rr,
         strip.background = element_blank(),
         strip.text.x = element_blank()) +
   ggtitle('Noise Condition') +
-  ylab(' ') + xlab(paste('Lag (',sampling_rate,' Hz)', sep="")) +
+  ylab(' ') + xlab(paste('Lag (',sampling_rate,' Hz)', sep=""))
   stat_smooth()
 
 # plot for dual-task condition
@@ -1496,7 +1475,7 @@ dual_task_plot = ggplot(data = dual_task_data, aes(x = lag, y = rr,
         strip.background = element_blank(),
         strip.text.x = element_blank()) +
   ggtitle('Dual-Task Condition') +
-  ylab('RR (mean)') + xlab(paste('Lag (',sampling_rate,' Hz)', sep="")) +
+  ylab('RR (mean)') + xlab(paste('Lag (',sampling_rate,' Hz)', sep=""))
   stat_smooth()
 
 # create another noise plot just for the legend
@@ -1530,19 +1509,6 @@ ggsave('./figures/DCC-all_dyad_profiles.png',
          ncol = 2
        ))
 
-# save high-resolution version
-tiff('./figures/DCC-all_dyad_profiles.tiff',
-       units='in', res = 300, width = 8, height = 5)
-grid.arrange(
-         top=textGrob("Head movement synchrony\nby task and conversation",
-                      gp=gpar(fontsize=14)),
-         dual_task_plot,
-         noise_plot,
-         bottom=master_legend,
-         ncol = 2
-)
-dev.off()
-
 # save smaller version for knitr
 ggsave('./figures/DCC-all_dyad_profiles-knitr.png',
        units = "in", width = 8, height = 5, dpi=100,
@@ -1555,6 +1521,19 @@ ggsave('./figures/DCC-all_dyad_profiles-knitr.png',
          ncol = 2
        ))
 
+# save tiff version
+tiff('./figures/DCC-all_dyad_profiles-knitr.tiff',
+     units = "in", width = 8, height = 5, res=300)
+grid.arrange(
+         top=textGrob("Individual dyad profiles of\nhead movement synchrony",
+                      gp=gpar(fontsize=14)),
+         dual_task_plot,
+         noise_plot,
+         bottom=master_legend,
+         ncol = 2
+       )
+dev.off()
+
 ```
 
-![**Figure**. Individual profiles for each dyad's RR by conversation type (affiliative/argumentative), condition (dual-task/noise), and lag (±5 seconds at 10 Hz).](./figures/DCC-all_dyad_profiles-knitr.png)
+![**Figure**. Individual profiles for each dyad's RR by conversation type (affiliative/argumentative), condition (dual-task/noise), and lag (±5 seconds).](./figures/DCC-all_dyad_profiles-knitr.png)

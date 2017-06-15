@@ -5,14 +5,14 @@ This R markdown provides the basis for our manuscript, "Interpersonal movement s
 To run these analyses from scratch, you will need the following files:
 
 * `./data/prepped_data-DCC.csv`: Contains experimental data. All data for included dyads are freely available in the OSF repository for the project: `https://osf.io/x9ay6/`.
-* `./supplementary-code/required_packages-DCC.r`: Installs required libraries, if they are not already installed. (This should be run *before* running this Rmarkdown file.)
+* `./supplementary-code/required_packages-DCC.r`: Installs required libraries, if they are not already installed. **NOTE**: This should be run *before* running this script.
 * `./supplementary-code/libraries_and_functions-DCC.r`: Loads in necessary libraries and creates new functions for our analyses.
 * `./supplementary-code/continuous_rqa_parameters-DCC.r`: Identifies the appropriate parameters for continuous cross-recurrence quantification analysis (CRQA).
 
 Additional files will be created during the initial run that will help reduce processing time. Several of these files--including the chosen CRQA parameters, the final plotting dataframe, and the final analysis dataframe---are available as CSVs from the OSF repository listed above.
 
 **Written by**: A. Paxton (University of California, Berkeley) and R. Dale (University of California, Merced)
-<br>**Date last modified**: 22 May 2017
+<br>**Date last modified**: 14 June 2017
 
 ***
 
@@ -77,18 +77,18 @@ coords = coords %>% ungroup() %>%
   mutate(euclid_accel = signal::filtfilt(post_downsample_butter, euclid_accel)) # filter
 
 # isolate participants' time series within each dyad
-p0 = coords %>% ungroup() %>% 
-  dplyr::filter(partic == 0) %>% 
+p0 = coords %>% ungroup() %>%
+  dplyr::filter(partic == 0) %>%
   select(-partic) %>%
   dplyr::rename(euclid0 = euclid_accel)
-p1 = coords %>% ungroup() %>% 
-  dplyr::filter(partic == 1) %>% 
+p1 = coords %>% ungroup() %>%
+  dplyr::filter(partic == 1) %>%
   select(-partic) %>%
   dplyr::rename(euclid1 = euclid_accel)
 
 # join together the participants' time series, leaving only any overlapping slices
-coords = plyr::join(p0, p1, 
-                    by=c("dyad", "conv.num", "conv.type", "cond", "t"), 
+coords = plyr::join(p0, p1,
+                    by=c("dyad", "conv.num", "conv.type", "cond", "t"),
                     type="inner")
 ```
 
@@ -187,12 +187,12 @@ if( conservative_jerk >= conservative_jounce ){
 
 # merge with the rest of the dataframe, trim instruction period, drop unneded variables, and filter
 coords.trimmed = coords.deriv %>% ungroup() %>%
-  merge(., cutoff.points, 
+  merge(., cutoff.points,
         by = c('dyad','conv.num','conv.type','cond')) %>%
   group_by(dyad, conv.num, conv.type, cond) %>%
   dplyr::filter(t > unique(cutoff.t)) %>%
-  select(-one_of('cutoff.t','cutoff'), 
-         -matches('jerk'), 
+  select(-one_of('cutoff.t','cutoff'),
+         -matches('jerk'),
          -matches('jounce'))
 ```
 
@@ -211,7 +211,6 @@ write.table(coords.trimmed,'./data/DCC-trimmed-data.csv', sep=',',
 ## Summary statistics on conversation lengths
 
 What do the final data look like (after trimming the calibration period)?
-
 
 
 
@@ -282,7 +281,6 @@ The source file produces outputs that are useful for tracking progress, but we s
 
 Here we join the CRQA parameters identified above to the existing movement dataframe.
 
-
 ```r
 # read in our chosen parameters
 crqa_params = read.table('./data/crqa_data_and_parameters-DCC.csv',
@@ -314,7 +312,7 @@ split_convs = split(coords_crqa,
 
 ## Run CRQA and DRPs
 
-Now that we have our parameters, we run continuous CRQA over each conversation for each dyad using the `crqa` function from the `crqa` package (Coco & Dale, 2014, *Frontiers in Psychology*). This again produces output that can be useful for tracking progress, but we supress these messages for brevity.
+Now that we have our parameters, we run continuous CRQA over each conversation for each dyad using the `crqa` function from the `crqa` package (Coco & Dale, 2014, *Frontiers in Psychology*). This produces output that can be useful for tracking progress, but we suppress these messages for brevity.
 
 
 ```r
@@ -326,31 +324,31 @@ win_size = target_seconds * sampling_rate
 drp_results = data.frame()
 crqa_results = data.frame()
 for (next_conv in split_convs){
-  
+
   # isolate parameters for this next dyad
   chosen.delay = unique(next_conv$chosen.delay)
   chosen.embed = unique(next_conv$chosen.embed)
   chosen.radius = unique(next_conv$chosen.radius)
-  
+
   # # print update
   # print(paste("CRQA: Dyad ", unique(next_conv$dyad),
   #             ", conversation ",unique(next_conv$conv.num),
   #             sep=""))
-  
+
   # run cross-recurrence
   rec_analysis = crqa(ts1=next_conv$rescale.euclid0,
                       ts2=next_conv$rescale.euclid1,
                       delay=chosen.delay,
                       embed=chosen.embed,
                       r=chosen.radius,
-                      normalize=0, 
-                      rescale=0, 
+                      normalize=0,
+                      rescale=0,
                       mindiagline=2,
-                      minvertline=2, 
-                      tw=0, 
+                      minvertline=2,
+                      tw=0,
                       whiteline=FALSE,
                       recpt=FALSE)
-  
+
   # save plot-level information to dataframe
   dyad_num = unique(next_conv$dyad)
   next_data_line = data.frame(c(dyad_num,
@@ -548,8 +546,8 @@ rec_convers_condition_gca_st = lmer(rr ~ convers + condition + ot1 + ot2 +
                                        convers.ot1 + condition.ot1 + condition.convers.ot1 +
                                        convers.ot2 + condition.ot2 + condition.convers.ot2 +
                                        convers.ot1.ot2 + condition.ot1.ot2 + condition.convers.ot1.ot2 +
-                                       (1 + ot1 + ot2 + convers + condition.convers.ot1 | conv.num) + 
-                                       (1 + ot1 + ot2 + convers + condition.convers.ot1 | dyad), 
+                                       (1 + ot1 + ot2 + convers + condition.convers.ot1 | conv.num) +
+                                       (1 + ot1 + ot2 + convers + condition.convers.ot1 | dyad),
                                     data=rec_st, REML=FALSE)
 invisible(pander_lme_to_latex(rec_convers_condition_gca_st,'standardized_model_latex-DCC.tex'))
 pander_lme(rec_convers_condition_gca_st,stats.caption = TRUE)
@@ -829,13 +827,9 @@ To explore how these patterns differ from the amount of coordination that might 
 
 ## Surrogate data preparation
 
-**NOTE**: The chunks of code in this section do not have to be run each time, since the resulting datasets will be saved to CSV files. As a result, these chunks are currently set to `eval=FALSE`. Bear this in mind if these data need to be re-calculated.
-
 ***
 
 ### Preliminaries
-
-This section clears the workspace and reads in the prepared data files.
 
 
 ```r
@@ -855,7 +849,7 @@ crqa_params = read.table('./data/crqa_data_and_parameters-DCC.csv',
 
 ### Load CRQA parameters
 
-Let's load in the CRQA parameters specified for the real data and prepare for CRQA.
+Load in the CRQA parameters specified for the real data and prepare the dataset for analysis.
 
 
 ```r
@@ -886,7 +880,7 @@ split_convs = split(coords_crqa,
 
 ### Calculate CRQA and DRPs for surrogate data
 
-Just as with the real data, we run continuous CRQA over each conversation of each dyad with the selected parameters using the `crqa` function from the `crqa` package (Coco & Dale, 2014, *Frontiers in Psychology*). Again, this includes code to print out updates, but we suppress them for brevity.
+We create surrogate movement data for each participant through phase-randomization, implemented using the `FFTsurrogate` function in the `nonlinearTseries` package. We then calculate CRQA over those surrogate data in order to create a baseline value of synchrony between participants.
 
 
 ```r
@@ -906,18 +900,13 @@ for (next_conv in split_convs){
   chosen.radius = unique(next_conv$chosen.radius)
   dyad_num = unique(next_conv$dyad)
 
-  # # print update
-  # print(paste("Surrogate CRQA: Dyad ", unique(next_conv$dyad),
-  #             ", conversation ",unique(next_conv$conv.num),
-  #             sep=""))
-
-  # re-shuffle the surrogate dyad and run again
+  # re-create the surrogate dyad and run again
   for (run in 1:10){
 
-    # shuffle time series
-    shuffle0 = base::sample(next_conv$rescale.euclid0,replace=FALSE)
-    shuffle1 = base::sample(next_conv$rescale.euclid1,replace=FALSE)
-    
+    # create phase-randomized baseline for each participant
+    shuffle0 = nonlinearTseries::FFTsurrogate(next_conv$rescale.euclid0, n.samples = 1)
+    shuffle1 = nonlinearTseries::FFTsurrogate(next_conv$rescale.euclid1, n.samples = 1)
+
     # run cross-recurrence
     rec_analysis = crqa(ts1=shuffle0,
                         ts2=shuffle1,
@@ -976,9 +965,7 @@ surrogate_recurrence_df = plyr::join(recurrence_results, additional_dyad_info,
 
 ***
 
-### Create first- and second-order polynomials for surrogate data
-
-As with the real data, we create first- and second-order orthogonal polynomials for the lag term. 
+### Create polynomials and center binary variables for surrogate data
 
 
 ```r
@@ -990,57 +977,23 @@ t = stats::poly((raw_lag + lag_offset), 2)
 lag_vals[, paste("ot", 1:2, sep="")] = t[lag_vals$raw_lag + lag_offset, 1:2]
 
 # join it to the original data table
-surrogate_recurrence_df = left_join(surrogate_recurrence_df,lag_vals, by = c("lag" = "raw_lag"))
-```
-
-***
-
-### Create surrogate interaction terms and standardized dataframes
-
-As with the real data, we create all appropriate interaction terms and a standardized dataframe.
-
-
-```r
-# rename variables and center the binary variables
-surrogate_recurrence_df = surrogate_recurrence_df %>% ungroup() %>%
+surrogate_recurrence_df = left_join(surrogate_recurrence_df,lag_vals, by = c("lag" = "raw_lag")) %>%
+  ungroup() %>%
   plyr::rename(.,
                c("conv.type"="convers",
                  "cond"="condition")) %>%
   mutate(condition = condition-.5) %>%
-  mutate(convers = convers-.5) %>%
-  mutate(condition.convers = condition * convers) %>%
-
-  # first-order polynomials
-  mutate(condition.ot1 = condition * ot1) %>%
-  mutate(convers.ot1 = convers * ot1) %>%
-  mutate(condition.convers.ot1 = condition * convers * ot1) %>%
-
-  # second-order polynomials
-  mutate(condition.ot2 = condition * ot2) %>%
-  mutate(convers.ot2 = convers * ot2) %>%
-  mutate(condition.convers.ot2 = condition * convers * ot2) %>%
-
-  # polynomial interactions
-  mutate(ot1.ot2 = ot1 * ot2) %>%
-  mutate(condition.ot1.ot2 = condition * ot1 * ot2) %>%
-  mutate(convers.ot1.ot2 = convers * ot1 * ot2) %>%
-  mutate(condition.convers.ot1.ot2 = condition * convers * ot1 * ot2)
-
-# create standardized dataframe
-surrogate_rec_st = mutate_each(surrogate_recurrence_df,funs(as.numeric(scale(.))))
+  mutate(convers = convers-.5)
 ```
 
 ***
 
-### Export surrogate dataframes
+### Export surrogate dataframe
 
 
 ```r
-# export plotting dataframe
+# export dataframe
 write.table(surrogate_recurrence_df,'./data/surrogate_plotting_df-DCC.csv',row.names=FALSE,sep=',')
-
-# export standardized analysis dataframe
-write.table(surrogate_rec_st,'./data/surrogate_analysis_df-DCC.csv',row.names=FALSE,sep=',')
 ```
 
 ***
@@ -1049,21 +1002,34 @@ write.table(surrogate_rec_st,'./data/surrogate_analysis_df-DCC.csv',row.names=FA
 
 ***
 
-### Create unified dataframe and appropriate interactions
-
-Now that we've created the surrogate dataset, we join it to the real dataset so that we can compare our observed data to what might be expected by chance. We create a new variable `data` to mark whether the row contains real (`data = .5`) or surrogate (`data = -.5`) data and interact it appropriately with other predictors. We then create a standardized dataframe.
+### Preliminaries
 
 
 ```r
-# read in real and surrogate datasets
+# clear our workspace
+rm(list=ls())
+
+# read in libraries and create functions
+source('./supplementary-code/libraries_and_functions-DCC.r')
+
+# read in the raw datasets for real and baseline data
 surrogate_plot = read.table('./data/surrogate_plotting_df-DCC.csv', sep=',', header = TRUE)
 rec_plot = read.table('./data/plotting_df-DCC.csv',sep=',',header=TRUE)
+```
 
+***
+
+### Combine real and surrogate data for analysis dataframes
+
+We combine the real data (loaded as `rec_plot`) and the surrogate data (loaded as `surrogate_plot`) into a single dataframe for later analysis. We create a new variable called `data`, which designates whether the data were real (`data = .5`) or phase-randomized baseline (`data = -.5`). We then create all relevant interaction terms and create a standardized dataframe.
+
+
+```r
 # label real and surrogate data
 rec_plot$data = .5
 surrogate_plot$data = -.5
 
-# join the two datasets
+# append the two time series
 all_data_plot = rbind.data.frame(rec_plot,dplyr::select(surrogate_plot,-run))
 
 # create interaction terms
@@ -1096,9 +1062,9 @@ all_data_st = mutate_each(all_data_plot,funs(as.numeric(scale(.))))
 
 ***
 
-### Comparing model to baseline
+### Comparing real data to baseline
 
-After analyzing the dynamics of the observed data (Section 4), we now explore how those dynamics differ from those we might expect to see by chance. The models below add `data` as an additional predictor (with all appropriate interactions) and use the most maximal random effects structure justified by the data.
+To see how the real data compare to baseline, we run a model identical to our central analysis (`rec_convers_condition_gca_st` and `rec_convers_condition_gca_raw`) but add in terms to capture whether the data were real or surrogate baseline (i.e., `data` and all relevant interaction terms).
 
 
 ```r
@@ -1142,40 +1108,40 @@ pander_lme(baseline_comparison_st,stats.caption=TRUE)
 
 |                &nbsp;                |  Estimate  |  Std..Error  |  t.value  |   p    |  sig  |
 |:------------------------------------:|:----------:|:------------:|:---------:|:------:|:-----:|
-|           **(Intercept)**            |  -0.03215  |   0.09489    |  -0.3388  |  0.74  |       |
-|               **data**               |   -0.338   |   0.002032   |  -166.3   |   0    |  ***  |
-|             **convers**              |  -0.6383   |    0.1902    |  -3.355   | 0.001  |  **   |
-|            **condition**             |  -0.0611   |    0.0912    |   -0.67   |  0.5   |       |
-|               **ot1**                |  0.01589   |   0.005046   |   3.15    | 0.002  |  **   |
-|               **ot2**                |  0.04242   |   0.003535   |    12     |   0    |  ***  |
-|             **data.ot1**             |  0.01819   |   0.005046   |   3.605   | 0.0003 |  ***  |
-|             **data.ot2**             |   0.0562   |   0.007424   |   7.57    |   0    |  ***  |
-|        **condition.convers**         |   0.1634   |    0.1482    |   1.103   |  0.27  |       |
-|           **data.convers**           |  -0.4284   |    0.0677    |  -6.328   |   0    |  ***  |
-|          **data.condition**          |   -0.129   |   0.003511   |  -36.74   |   0    |  ***  |
-|      **data.condition.convers**      |  0.09837   |    0.0677    |   1.453   | 0.146  |       |
-|          **condition.ot1**           |  -0.01826  |   0.005046   |   -3.62   | 0.0003 |  ***  |
-|        **data.condition.ot1**        |  -0.01701  |   0.005046   |  -3.371   | 0.001  |  **   |
-|           **convers.ot1**            |  -0.02694  |   0.005046   |  -5.339   |   0    |  ***  |
-|         **data.convers.ot1**         |  -0.02684  |   0.005046   |  -5.319   |   0    |  ***  |
-|      **condition.convers.ot1**       |   -0.032   |   0.005046   |  -6.342   |   0    |  ***  |
-|    **data.condition.convers.ot1**    |  -0.02976  |   0.005046   |  -5.897   |   0    |  ***  |
-|          **condition.ot2**           |  0.01537   |   0.003535   |   4.348   |   0    |  ***  |
-|        **data.condition.ot2**        |   0.0195   |   0.007424   |   2.627   | 0.009  |  **   |
-|           **convers.ot2**            |  0.03886   |   0.003535   |   10.99   |   0    |  ***  |
-|         **data.convers.ot2**         |  0.03793   |   0.003535   |   10.73   |   0    |  ***  |
-|      **condition.convers.ot2**       |  0.06459   |   0.003535   |   18.27   |   0    |  ***  |
-|    **data.condition.convers.ot2**    |  0.06474   |   0.003535   |   18.31   |   0    |  ***  |
-|             **ot1.ot2**              |  -0.03561  |   0.005046   |  -7.056   |   0    |  ***  |
-|           **data.ot1.ot2**           |  -0.0359   |   0.005046   |  -7.114   |   0    |  ***  |
-|        **condition.ot1.ot2**         | -0.003742  |   0.005046   |  -0.7416  |  0.46  |       |
-|      **data.condition.ot1.ot2**      | -0.002711  |   0.005046   |  -0.5373  |  0.59  |       |
-|         **convers.ot1.ot2**          |  0.003483  |   0.005046   |  0.6903   |  0.49  |       |
-|       **data.convers.ot1.ot2**       |  0.001986  |   0.005046   |  0.3937   |  0.69  |       |
-|    **condition.convers.ot1.ot2**     |  0.001377  |   0.005046   |   0.273   |  0.78  |       |
-|  **data.condition.convers.ot1.ot2**  | -0.0008054 |   0.005046   |  -0.1596  |  0.87  |       |
+|           **(Intercept)**            |  0.02137   |   0.08716    |  0.2451   |  0.81  |       |
+|               **data**               |  -0.1328   |   0.003286   |  -40.42   |   0    |  ***  |
+|             **convers**              |  -0.2196   |    0.1278    |  -1.718   | 0.086  |   .   |
+|            **condition**             |  0.03421   |   0.08648    |  0.3956   |  0.69  |       |
+|               **ot1**                |  0.02361   |   0.008159   |   2.894   | 0.004  |  **   |
+|               **ot2**                |  0.02512   |   0.005716   |   4.395   |   0    |  ***  |
+|             **data.ot1**             | -0.006272  |   0.008159   |  -0.7688  |  0.44  |       |
+|             **data.ot2**             |  0.02503   |   0.00894    |    2.8    | 0.005  |  **   |
+|        **condition.convers**         |   0.0904   |   0.09617    |   0.94    |  0.35  |       |
+|           **data.convers**           |   -0.32    |   0.04654    |  -6.875   |   0    |  ***  |
+|          **data.condition**          |  -0.1136   |   0.005676   |  -20.02   |   0    |  ***  |
+|      **data.condition.convers**      |  0.04422   |   0.04654    |  0.9501   |  0.34  |       |
+|          **condition.ot1**           | -0.006379  |   0.008159   |  -0.7819  |  0.43  |       |
+|        **data.condition.ot1**        |  -0.01156  |   0.008159   |  -1.417   | 0.157  |       |
+|           **convers.ot1**            |  0.00116   |   0.008159   |  0.1421   |  0.89  |       |
+|         **data.convers.ot1**         |  -0.02851  |   0.008159   |  -3.495   |   0    |  ***  |
+|      **condition.convers.ot1**       |  -0.01852  |   0.008159   |   -2.27   | 0.023  |   *   |
+|    **data.condition.convers.ot1**    |  -0.01289  |   0.008159   |   -1.58   | 0.114  |       |
+|          **condition.ot2**           |  0.005771  |   0.005716   |   1.01    |  0.31  |       |
+|        **data.condition.ot2**        |  0.01196   |   0.00894    |   1.338   | 0.181  |       |
+|           **convers.ot2**            |  0.02156   |   0.005716   |   3.772   | 0.0002 |  ***  |
+|         **data.convers.ot2**         |   0.0175   |   0.005716   |   3.061   | 0.002  |  **   |
+|      **condition.convers.ot2**       |  0.04032   |   0.005716   |   7.054   |   0    |  ***  |
+|    **data.condition.convers.ot2**    |  0.02546   |   0.005716   |   4.454   |   0    |  ***  |
+|             **ot1.ot2**              |  -0.02553  |   0.008159   |  -3.129   | 0.002  |  **   |
+|           **data.ot1.ot2**           |  -0.01083  |   0.008159   |  -1.328   | 0.184  |       |
+|        **condition.ot1.ot2**         | -0.004893  |   0.008159   |  -0.5997  |  0.55  |       |
+|      **data.condition.ot1.ot2**      |  0.00161   |   0.008159   |  0.1974   |  0.84  |       |
+|         **convers.ot1.ot2**          |  -0.01258  |   0.008159   |  -1.541   | 0.123  |       |
+|       **data.convers.ot1.ot2**       |  0.01536   |   0.008159   |   1.882   |  0.06  |   .   |
+|    **condition.convers.ot1.ot2**     |  0.003793  |   0.008159   |  0.4649   |  0.64  |       |
+|  **data.condition.convers.ot1.ot2**  | -0.003502  |   0.008159   |  -0.4292  |  0.67  |       |
 
-Table: **Marginal *R*-squared: 0.27. Conditional *R*-squared: 0.82.**
+Table: **Marginal *R*-squared: 0.08. Conditional *R*-squared: 0.51.**
 
 ```r
 # raw model
@@ -1217,44 +1183,46 @@ pander_lme(baseline_comparison_raw,stats.caption=TRUE)
 
 |                &nbsp;                |  Estimate  |  Std..Error  |  t.value  |   p    |  sig  |
 |:------------------------------------:|:----------:|:------------:|:---------:|:------:|:-----:|
-|           **(Intercept)**            |  0.03595   |   0.001149   |   31.3    |   0    |  ***  |
-|               **data**               |  -0.01411  |  0.00008487  |  -166.3   |   0    |  ***  |
-|             **convers**              |  -0.01533  |   0.004567   |  -3.356   | 0.001  |  **   |
-|            **condition**             | -0.001482  |   0.002212   |  -0.6699  |  0.5   |       |
-|               **ot1**                |  0.001917  |  0.0006087   |   3.15    | 0.002  |  **   |
-|               **ot2**                |  0.005117  |  0.0004265   |    12     |   0    |  ***  |
-|             **data.ot1**             |  0.00439   |   0.001217   |   3.605   | 0.0003 |  ***  |
-|             **data.ot2**             |  0.01356   |   0.001791   |   7.57    |   0    |  ***  |
-|        **condition.convers**         |  0.007848  |   0.007115   |   1.103   |  0.27  |       |
-|           **data.convers**           |  -0.02057  |   0.003251   |  -6.328   |   0    |  ***  |
-|          **data.condition**          | -0.006236  |  0.0001697   |  -36.74   |   0    |  ***  |
-|      **data.condition.convers**      |  0.009447  |   0.006501   |   1.453   | 0.146  |       |
-|          **condition.ot1**           | -0.004407  |   0.001217   |   -3.62   | 0.0003 |  ***  |
-|        **data.condition.ot1**        | -0.008207  |   0.002435   |  -3.371   | 0.001  |  **   |
-|           **convers.ot1**            | -0.006501  |   0.001217   |  -5.339   |   0    |  ***  |
-|         **data.convers.ot1**         |  -0.01295  |   0.002435   |  -5.319   |   0    |  ***  |
-|      **condition.convers.ot1**       |  -0.01544  |   0.002435   |  -6.342   |   0    |  ***  |
-|    **data.condition.convers.ot1**    |  -0.02872  |   0.00487    |  -5.897   |   0    |  ***  |
-|          **condition.ot2**           |  0.003709  |  0.0008529   |   4.348   |   0    |  ***  |
-|        **data.condition.ot2**        |  0.009411  |   0.003583   |   2.627   | 0.009  |  **   |
-|           **convers.ot2**            |  0.009377  |  0.0008529   |   10.99   |   0    |  ***  |
-|         **data.convers.ot2**         |   0.0183   |   0.001706   |   10.73   |   0    |  ***  |
-|      **condition.convers.ot2**       |  0.03117   |   0.001706   |   18.27   |   0    |  ***  |
-|    **data.condition.convers.ot2**    |  0.06248   |   0.003412   |   18.31   |   0    |  ***  |
-|             **ot1.ot2**              |  -0.03445  |   0.004882   |  -7.056   |   0    |  ***  |
-|           **data.ot1.ot2**           |  -0.06946  |   0.009763   |  -7.114   |   0    |  ***  |
-|        **condition.ot1.ot2**         | -0.007241  |   0.009763   |  -0.7416  |  0.46  |       |
-|      **data.condition.ot1.ot2**      |  -0.01049  |   0.01953    |  -0.5373  |  0.59  |       |
-|         **convers.ot1.ot2**          |  0.00674   |   0.009763   |  0.6903   |  0.49  |       |
-|       **data.convers.ot1.ot2**       |  0.007687  |   0.01953    |  0.3937   |  0.69  |       |
-|    **condition.convers.ot1.ot2**     |  0.00533   |   0.01953    |   0.273   |  0.78  |       |
-|  **data.condition.convers.ot1.ot2**  | -0.006234  |   0.03905    |  -0.1596  |  0.87  |       |
+|           **(Intercept)**            |  0.03518   |   0.002078   |   16.93   |   0    |  ***  |
+|               **data**               |  -0.01091  |  0.0002698   |  -40.42   |   0    |  ***  |
+|             **convers**              |  -0.01037  |   0.006032   |  -1.719   | 0.086  |   .   |
+|            **condition**             |  0.001632  |   0.004124   |  0.3956   |  0.69  |       |
+|               **ot1**                |   0.0056   |   0.001935   |   2.894   | 0.004  |  **   |
+|               **ot2**                |  0.005959  |   0.001356   |   4.395   |   0    |  ***  |
+|             **data.ot1**             | -0.002976  |   0.003871   |  -0.7688  |  0.44  |       |
+|             **data.ot2**             |  0.01188   |   0.004241   |    2.8    | 0.005  |  **   |
+|        **condition.convers**         |  0.008535  |   0.009079   |   0.94    |  0.35  |       |
+|           **data.convers**           |  -0.03021  |   0.004394   |  -6.875   |   0    |  ***  |
+|          **data.condition**          |  -0.0108   |  0.0005396   |  -20.02   |   0    |  ***  |
+|      **data.condition.convers**      |  0.00835   |   0.008788   |  0.9501   |  0.34  |       |
+|          **condition.ot1**           | -0.003026  |   0.003871   |  -0.7819  |  0.43  |       |
+|        **data.condition.ot1**        |  -0.01097  |   0.007741   |  -1.417   | 0.157  |       |
+|           **convers.ot1**            | 0.0005502  |   0.003871   |  0.1421   |  0.89  |       |
+|         **data.convers.ot1**         |  -0.02705  |   0.007741   |  -3.495   |   0    |  ***  |
+|      **condition.convers.ot1**       |  -0.01757  |   0.007741   |   -2.27   | 0.023  |   *   |
+|    **data.condition.convers.ot1**    |  -0.02446  |   0.01548    |   -1.58   | 0.114  |       |
+|          **condition.ot2**           |  0.002738  |   0.002712   |   1.01    |  0.31  |       |
+|        **data.condition.ot2**        |  0.01135   |   0.008482   |   1.338   | 0.181  |       |
+|           **convers.ot2**            |  0.01023   |   0.002712   |   3.772   | 0.0002 |  ***  |
+|         **data.convers.ot2**         |   0.0166   |   0.005423   |   3.061   | 0.002  |  **   |
+|      **condition.convers.ot2**       |  0.03825   |   0.005423   |   7.054   |   0    |  ***  |
+|    **data.condition.convers.ot2**    |  0.04831   |   0.01085    |   4.454   |   0    |  ***  |
+|             **ot1.ot2**              |  -0.04857  |   0.01552    |  -3.129   | 0.002  |  **   |
+|           **data.ot1.ot2**           |  -0.04122  |   0.03104    |  -1.328   | 0.184  |       |
+|        **condition.ot1.ot2**         |  -0.01861  |   0.03104    |  -0.5997  |  0.55  |       |
+|      **data.condition.ot1.ot2**      |  0.01225   |   0.06208    |  0.1974   |  0.84  |       |
+|         **convers.ot1.ot2**          |  -0.04784  |   0.03104    |  -1.541   | 0.123  |       |
+|       **data.convers.ot1.ot2**       |   0.1169   |   0.06208    |   1.882   |  0.06  |   .   |
+|    **condition.convers.ot1.ot2**     |  0.02886   |   0.06208    |  0.4649   |  0.64  |       |
+|  **data.condition.convers.ot1.ot2**  |  -0.05329  |    0.1242    |  -0.4292  |  0.67  |       |
 
-Table: **Marginal *R*-squared: 0.27. Conditional *R*-squared: 0.82.**
+Table: **Marginal *R*-squared: 0.08. Conditional *R*-squared: 0.51.**
 
 ***
 
 ### Exploring interaction terms
+
+In order to understand the higher-order interactions, we create separate datasets for the friendly and argumentative conversations and then re-run the model as above.
 
 ***
 
@@ -1285,18 +1253,23 @@ arg_only_st = arg_only_raw %>%
 
 #### Post-hoc interaction tests
 
-As with the real data, we next examine the interactions by separately analyzing the friendly and argumentative conversations, still including the `data` predictor to compare observed to baseline.
-
 
 ```r
 # check for differences in the friendly conversation (standardized)
 aff_posthoc_comparison_st = lmer(rr ~ data + condition + ot1 + ot2
-                              + data.ot1 + data.ot2 + data.condition
-                              + condition.ot1 + condition.ot2 + data.condition.ot1 
-                              + data.condition.ot2 + ot1.ot2 + data.ot1.ot2
-                              + condition.ot1.ot2 + data.condition.ot1.ot2
-                              + (1 + ot1 | conv.num)
-                              + (1 + ot1 + data + condition + data.ot2 + data.condition | dyad),
+                              + data.ot1
+                              + data.ot2
+                              + data.condition
+                              + condition.ot1
+                              + data.condition.ot1
+                              + condition.ot2
+                              + data.condition.ot2
+                              + ot1.ot2
+                              + data.ot1.ot2
+                              + condition.ot1.ot2
+                              + data.condition.ot1.ot2
+                              + (1 + ot1| conv.num)
+                              + (1 + ot1+ data + condition + data.ot2 | dyad),
                               data = aff_only_st,
                               REML = FALSE)
 invisible(pander_lme_to_latex(aff_posthoc_comparison_st,'aff_posthoc_comparison_latex-DCC.tex'))
@@ -1305,34 +1278,41 @@ pander_lme(aff_posthoc_comparison_st,stats.caption=TRUE)
 
 
 
-|            &nbsp;            |     Estimate      |  Std..Error  |     t.value     |   p   |  sig  |
-|:----------------------------:|:-----------------:|:------------:|:---------------:|:-----:|:-----:|
-|       **(Intercept)**        | 0.000000000007113 |    0.152     | 0.0000000000468 |   1   |       |
-|           **data**           |      -0.1175      |   0.09912    |     -1.186      | 0.236 |       |
-|        **condition**         |      -0.2704      |    0.2431    |     -1.112      | 0.27  |       |
-|           **ot1**            |      0.05492      |   0.01737    |      3.162      | 0.002 |  **   |
-|           **ot2**            |     0.004557      |   0.005987   |     0.7612      | 0.45  |       |
-|         **data.ot1**         |      0.05774      |   0.008546   |      6.756      |   0   |  ***  |
-|         **data.ot2**         |      0.02343      |   0.01255    |      1.867      | 0.062 |   .   |
-|      **data.condition**      |      -0.2907      |    0.1712    |     -1.698      | 0.09  |   .   |
-|      **condition.ot1**       |      0.01761      |   0.01737    |      1.014      | 0.31  |       |
-|      **condition.ot2**       |     -0.06311      |   0.005987   |     -10.54      |   0   |  ***  |
-|    **data.condition.ot1**    |      0.01635      |   0.008546   |      1.913      | 0.056 |   .   |
-|    **data.condition.ot2**    |      -0.058       |   0.01255    |     -4.621      |   0   |  ***  |
-|         **ot1.ot2**          |     -0.05012      |   0.008546   |     -5.865      |   0   |  ***  |
-|       **data.ot1.ot2**       |     -0.04858      |   0.008546   |     -5.684      |   0   |  ***  |
-|    **condition.ot1.ot2**     |     -0.006564     |   0.008546   |     -0.7681     | 0.44  |       |
-|  **data.condition.ot1.ot2**  |     -0.002444     |   0.008546   |     -0.286      | 0.78  |       |
+|            &nbsp;            |     Estimate      |  Std..Error  |     t.value      |   p   |  sig  |
+|:----------------------------:|:-----------------:|:------------:|:----------------:|:-----:|:-----:|
+|       **(Intercept)**        | 0.000000000001291 |    0.1219    | 0.00000000001059 |   1   |       |
+|           **data**           |      0.06203      |   0.06077    |      1.021       | 0.31  |       |
+|        **condition**         |     -0.07899      |    0.1307    |     -0.6045      | 0.55  |       |
+|           **ot1**            |      0.02723      |   0.03027    |      0.8994      | 0.37  |       |
+|           **ot2**            |     0.004323      |   0.008811   |      0.4907      | 0.62  |       |
+|         **data.ot1**         |      0.02697      |   0.01258    |      2.145       | 0.032 |   *   |
+|         **data.ot2**         |     0.009139      |   0.01567    |      0.5831      | 0.56  |       |
+|      **data.condition**      |      -0.1911      |    0.105     |      -1.82       | 0.069 |   .   |
+|      **condition.ot1**       |      0.01472      |   0.03027    |      0.4863      | 0.63  |       |
+|    **data.condition.ot1**    |     0.001615      |   0.01258    |      0.1284      |  0.9  |       |
+|      **condition.ot2**       |      -0.0419      |   0.008811   |      -4.755      |   0   |  ***  |
+|    **data.condition.ot2**    |     -0.01637      |   0.01567    |      -1.044      |  0.3  |       |
+|         **ot1.ot2**          |     -0.01571      |   0.01258    |      -1.249      | 0.212 |       |
+|       **data.ot1.ot2**       |     -0.03177      |   0.01258    |      -2.526      | 0.012 |   *   |
+|    **condition.ot1.ot2**     |     -0.01053      |   0.01258    |     -0.8376      |  0.4  |       |
+|  **data.condition.ot1.ot2**  |      0.0062       |   0.01258    |      0.493       | 0.62  |       |
 
-Table: **Marginal *R*-squared: 0.05. Conditional *R*-squared: 0.73.**
+Table: **Marginal *R*-squared: 0.02. Conditional *R*-squared: 0.42.**
 
 ```r
 # check for differences in the friendly conversation (raw)
 aff_posthoc_comparison_raw = lmer(rr ~ data + condition + ot1 + ot2
-                              + data.ot1 + data.ot2 + data.condition
-                              + condition.ot1 + condition.ot2 + data.condition.ot1 
-                              + data.condition.ot2 + ot1.ot2 + data.ot1.ot2
-                              + condition.ot1.ot2 + data.condition.ot1.ot2
+                              + data.ot1
+                              + data.ot2
+                              + data.condition
+                              + condition.ot1
+                              + data.condition.ot1
+                              + condition.ot2
+                              + data.condition.ot2
+                              + ot1.ot2
+                              + data.ot1.ot2
+                              + condition.ot1.ot2
+                              + data.condition.ot1.ot2
                               + (1 + ot1 | conv.num)
                               + (1 + ot1 + data + condition + data.ot2 + data.condition | dyad),
                               data = aff_only_raw,
@@ -1344,24 +1324,24 @@ pander_lme(aff_posthoc_comparison_raw,stats.caption=TRUE)
 
 |            &nbsp;            |  Estimate  |  Std..Error  |  t.value  |   p   |  sig  |
 |:----------------------------:|:----------:|:------------:|:---------:|:-----:|:-----:|
-|       **(Intercept)**        |   0.0439   |    0.0023    |   19.09   |   0   |  ***  |
-|           **data**           | -0.003827  |   0.003228   |  -1.186   | 0.236 |       |
-|        **condition**         | -0.005115  |    0.0046    |  -1.112   | 0.27  |       |
-|           **ot1**            |  0.005168  |   0.001635   |   3.162   | 0.002 |  **   |
-|           **ot2**            | 0.0004288  |  0.0005633   |  0.7612   | 0.45  |       |
-|         **data.ot1**         |  0.01087   |   0.001608   |   6.756   |   0   |  ***  |
-|         **data.ot2**         |  0.004408  |   0.002362   |   1.867   | 0.062 |   .   |
-|      **data.condition**      |  -0.01096  |   0.006456   |  -1.698   | 0.09  |   .   |
-|      **condition.ot1**       |  0.003314  |   0.003269   |   1.014   | 0.31  |       |
-|      **condition.ot2**       |  -0.01188  |   0.001127   |  -10.54   |   0   |  ***  |
-|    **data.condition.ot1**    |  0.006152  |   0.003216   |   1.913   | 0.056 |   .   |
-|    **data.condition.ot2**    |  -0.02183  |   0.004724   |  -4.621   |   0   |  ***  |
-|         **ot1.ot2**          |  -0.03782  |   0.006448   |  -5.865   |   0   |  ***  |
-|       **data.ot1.ot2**       |  -0.0733   |    0.0129    |  -5.684   |   0   |  ***  |
-|    **condition.ot1.ot2**     | -0.009906  |    0.0129    |  -0.7681  | 0.44  |       |
-|  **data.condition.ot1.ot2**  | -0.007376  |   0.02579    |  -0.286   | 0.78  |       |
+|       **(Intercept)**        |  0.03989   |   0.002566   |   15.55   |   0   |  ***  |
+|           **data**           |  0.004199  |   0.003926   |   1.07    | 0.28  |       |
+|        **condition**         | -0.003106  |   0.005132   |  -0.6053  | 0.55  |       |
+|           **ot1**            |  0.005325  |   0.00592    |  0.8994   | 0.37  |       |
+|           **ot2**            | 0.0008455  |   0.001723   |  0.4907   | 0.62  |       |
+|         **data.ot1**         |  0.01055   |   0.004919   |   2.145   | 0.032 |   *   |
+|         **data.ot2**         |  0.003575  |   0.006131   |  0.5831   | 0.56  |       |
+|      **data.condition**      |  -0.01498  |   0.007851   |  -1.908   | 0.056 |   .   |
+|      **condition.ot1**       |  0.005759  |   0.01184    |  0.4863   | 0.63  |       |
+|    **data.condition.ot1**    |  0.001264  |   0.009839   |  0.1284   |  0.9  |       |
+|      **condition.ot2**       |  -0.01639  |   0.003446   |  -4.755   |   0   |  ***  |
+|    **data.condition.ot2**    |  -0.0128   |   0.01226    |  -1.044   |  0.3  |       |
+|         **ot1.ot2**          |  -0.02464  |   0.01972    |  -1.249   | 0.212 |       |
+|       **data.ot1.ot2**       |  -0.09965  |   0.03945    |  -2.526   | 0.012 |   *   |
+|    **condition.ot1.ot2**     |  -0.03304  |   0.03945    |  -0.8376  |  0.4  |       |
+|  **data.condition.ot1.ot2**  |   0.0389   |    0.0789    |   0.493   | 0.62  |       |
 
-Table: **Marginal *R*-squared: 0.05. Conditional *R*-squared: 0.73.**
+Table: **Marginal *R*-squared: 0.02. Conditional *R*-squared: 0.41.**
 
 
 ```r
@@ -1388,26 +1368,26 @@ pander_lme(arg_posthoc_comparison_st,stats.caption=TRUE)
 
 
 
-|            &nbsp;            |     Estimate      |  Std..Error  |     t.value      |   p   |  sig  |
-|:----------------------------:|:-----------------:|:------------:|:----------------:|:-----:|:-----:|
-|       **(Intercept)**        | -0.00000000006894 |    0.1848    | -0.0000000003731 |   1   |       |
-|           **data**           |      -0.5234      |    0.0391    |      -13.39      |   0   |  ***  |
-|        **condition**         |       0.106       |    0.1688    |      0.6281      | 0.53  |       |
-|           **ot1**            |     -0.009896     |   0.007931   |      -1.248      | 0.212 |       |
-|           **ot2**            |      0.07281      |   0.006085   |      11.97       |   0   |  ***  |
-|         **data.ot1**         |     -0.007745     |   0.004914   |      -1.576      | 0.115 |       |
-|         **data.ot2**         |      0.08431      |   0.003443   |      24.49       |   0   |  ***  |
-|      **data.condition**      |     -0.02803      |   0.06754    |      -0.415      | 0.68  |       |
-|      **condition.ot1**       |     -0.04503      |   0.007931   |      -5.677      |   0   |  ***  |
-|    **data.condition.ot1**    |     -0.04189      |   0.004914   |      -8.524      |   0   |  ***  |
-|      **condition.ot2**       |      0.07163      |   0.006085   |      11.77       |   0   |  ***  |
-|    **data.condition.ot2**    |      0.07546      |   0.003443   |      21.92       |   0   |  ***  |
-|         **ot1.ot2**          |     -0.02877      |   0.004914   |      -5.855      |   0   |  ***  |
-|       **data.ot1.ot2**       |     -0.03038      |   0.004914   |      -6.181      |   0   |  ***  |
-|    **condition.ot1.ot2**     |     -0.002118     |   0.004914   |     -0.4311      | 0.67  |       |
-|  **data.condition.ot1.ot2**  |     -0.00315      |   0.004914   |      -0.641      | 0.52  |       |
+|            &nbsp;            |      Estimate      |  Std..Error  |      t.value      |   p   |  sig  |
+|:----------------------------:|:------------------:|:------------:|:-----------------:|:-----:|:-----:|
+|       **(Intercept)**        | 0.0000000000004706 |    0.1546    | 0.000000000003043 |   1   |       |
+|           **data**           |      -0.2763       |   0.04397    |      -6.282       |   0   |  ***  |
+|        **condition**         |      0.09924       |    0.1125    |      0.8822       | 0.38  |       |
+|           **ot1**            |       0.0216       |   0.01896    |       1.139       | 0.26  |       |
+|           **ot2**            |       0.0407       |   0.01233    |       3.301       | 0.001 |  **   |
+|         **data.ot1**         |      -0.03033      |   0.01006    |      -3.015       | 0.003 |  **   |
+|         **data.ot2**         |      0.03708       |   0.007048   |       5.262       |   0   |  ***  |
+|      **data.condition**      |      -0.06079      |   0.07596    |      -0.8004      | 0.42  |       |
+|      **condition.ot1**       |      -0.02171      |   0.01896    |      -1.145       | 0.25  |       |
+|    **data.condition.ot1**    |      -0.02132      |   0.01006    |      -2.119       | 0.034 |   *   |
+|      **condition.ot2**       |      0.04019       |   0.01233    |       3.259       | 0.001 |  **   |
+|    **data.condition.ot2**    |      0.03263       |   0.007048   |       4.63        |   0   |  ***  |
+|         **ot1.ot2**          |      -0.03323      |   0.01006    |      -3.303       | 0.001 |  **   |
+|       **data.ot1.ot2**       |      0.003945      |   0.01006    |      0.3921       |  0.7  |       |
+|    **condition.ot1.ot2**     |     -0.0009593     |   0.01006    |     -0.09536      | 0.92  |       |
+|  **data.condition.ot1.ot2**  |     -0.001649      |   0.01006    |      -0.1639      | 0.87  |       |
 
-Table: **Marginal *R*-squared: 0.26. Conditional *R*-squared: 0.92.**
+Table: **Marginal *R*-squared: 0.1. Conditional *R*-squared: 0.64.**
 
 ```r
 # check for differences in the argumentative conversation (raw)
@@ -1434,36 +1414,32 @@ pander_lme(arg_posthoc_comparison_raw,stats.caption=TRUE)
 
 |            &nbsp;            |  Estimate  |  Std..Error  |  t.value  |   p   |  sig  |
 |:----------------------------:|:----------:|:------------:|:---------:|:-----:|:-----:|
-|       **(Intercept)**        |  0.02872   |   0.002286   |   12.56   |   0   |  ***  |
-|           **data**           |  -0.0244   |   0.001823   |  -13.39   |   0   |  ***  |
-|        **condition**         |  0.002871  |   0.004571   |   0.628   | 0.53  |       |
-|           **ot1**            | -0.001333  |   0.001068   |  -1.248   | 0.212 |       |
-|           **ot2**            |  0.009806  |  0.0008195   |   11.97   |   0   |  ***  |
-|         **data.ot1**         | -0.002086  |   0.001324   |  -1.576   | 0.115 |       |
-|         **data.ot2**         |  0.02271   |  0.0009273   |   24.49   |   0   |  ***  |
-|      **data.condition**      | -0.001513  |   0.003645   |  -0.415   | 0.68  |       |
-|      **condition.ot1**       |  -0.01213  |   0.002136   |  -5.677   |   0   |  ***  |
-|    **data.condition.ot1**    |  -0.02257  |   0.002647   |  -8.524   |   0   |  ***  |
-|      **condition.ot2**       |  0.01929   |   0.001639   |   11.77   |   0   |  ***  |
-|    **data.condition.ot2**    |  0.04065   |   0.001855   |   21.92   |   0   |  ***  |
-|         **ot1.ot2**          |  -0.03108  |   0.005307   |  -5.855   |   0   |  ***  |
-|       **data.ot1.ot2**       |  -0.06561  |   0.01061    |  -6.181   |   0   |  ***  |
-|    **condition.ot1.ot2**     | -0.004576  |   0.01061    |  -0.4311  | 0.67  |       |
-|  **data.condition.ot1.ot2**  |  -0.01361  |   0.02123    |  -0.641   | 0.52  |       |
+|       **(Intercept)**        |  0.02952   |   0.003076   |   9.596   |   0   |  ***  |
+|           **data**           |  -0.02601  |   0.00414    |  -6.282   |   0   |  ***  |
+|        **condition**         |  0.005428  |   0.006153   |  0.8822   | 0.38  |       |
+|           **ot1**            |  0.005875  |   0.005157   |   1.139   | 0.26  |       |
+|           **ot2**            |  0.01107   |   0.003354   |   3.301   | 0.001 |  **   |
+|         **data.ot1**         |  -0.0165   |   0.005473   |  -3.015   | 0.003 |  **   |
+|         **data.ot2**         |  0.02018   |   0.003834   |   5.262   |   0   |  ***  |
+|      **data.condition**      | -0.006628  |   0.008281   |  -0.8004  | 0.42  |       |
+|      **condition.ot1**       |  -0.01181  |   0.01031    |  -1.145   | 0.25  |       |
+|    **data.condition.ot1**    |  -0.0232   |   0.01095    |  -2.119   | 0.034 |   *   |
+|      **condition.ot2**       |  0.02186   |   0.006708   |   3.259   | 0.001 |  **   |
+|    **data.condition.ot2**    |  0.03551   |   0.007669   |   4.63    |   0   |  ***  |
+|         **ot1.ot2**          |  -0.07249  |   0.02195    |  -3.303   | 0.001 |  **   |
+|       **data.ot1.ot2**       |  0.01721   |   0.04389    |  0.3921   |  0.7  |       |
+|    **condition.ot1.ot2**     | -0.004185  |   0.04389    | -0.09536  | 0.92  |       |
+|  **data.condition.ot1.ot2**  |  -0.01439  |   0.08778    |  -0.1639  | 0.87  |       |
 
-Table: **Marginal *R*-squared: 0.26. Conditional *R*-squared: 0.92.**
+Table: **Marginal *R*-squared: 0.1. Conditional *R*-squared: 0.64.**
 
 ***
 
 # Discussion
 
-Our results indeed suggest that high- and low-level constraints influence coordination dynamics. Unexpectedly, we saw that participants did not exhibit time-locked head movement synchrony overall in the presence of these additional constraints on the interaction (`ot2`); instead, participants' head movements were organized in turn-taking patterns (i.e., time-lagged synchrony; Butler, 2011, *Personality and Social Psychology Review*). 
+The model's results indeed suggest that high- and low-level constraints influence coordination dynamics. Unexpectedly, we saw that participants did not exhibit time-locked head movement synchrony overall in the presence of these additional constraints on the interaction. Extending previous findings with gross body movements in another naturalistic interaction corpus (Paxton & Dale, 2013, *Quarterly Journal of Experimental Psychology*), we here found that argument decreases interpersonal synchrony.
 
-Extending previous findings with gross body movements in another naturalistic interaction corpus (Paxton & Dale, 2013, *Quarterly Journal of Experimental Psychology*), we again found that argument decreased interpersonal synchrony (`convers`) and exhibited a much more dramatic turn-taking pattern than observed in friendly conversations (`conver.ot2`). Interestingly, these patterns were quite similar to those observed in our analysis of speech patterns (Paxton & Dale, 2013, *Proceedings of the Cognitive Science Society*), perhaps suggesting that head movement patterns (as measured in the current analyses) may be influenced by speaking. 
-
-Although we hypothesized that the noise condition would increase coordination compared to a dual-task condition, we did not find a simple effect of condition (`condition`). Instead, condition affected the dynamics of coordination in conjunction with high-level contextual pressures (`condition.convers.ot2`). Specifically, arguing dyads in the dual-task condition produced much stronger turn-taking patterns than observed during other conditions.
-
-Our previous analysis of overall body movement showed that coordination during friendly conversations was significantly higher than chance while coordination during arguments did not significantly differ from chance (Paxton & Dale, 2013, *Quarterly Journal of Experimental Psychology*). Here, however, we found that head movement coordination during friendly conversations did not significantly differ from chance and that coordination during arguments was significantly *lower* than chance.
+Interestingly, although we hypothesized that the noise condition would increase coordination compared to a dual-task condition, we did not find a simple effect of condition. Instead, condition affected the dynamics of coordination in a three-way interaction among conversation type, condition, and the quadratic term. In both conditions, affiliative conversations induced relatively flat coordination dynamics, although at a rate significanty higher than in arguments. In argument, however, we found very different dynamics by condition: We observed the U-shape characteristic of turn-taking dynamics in the dual-task condition but saw a relatively flat recurrence profile in the noise condition.
 
 Taken together, we view our results as consistent with the growing view of interpersonal communication as a complex dynamical system.
 
@@ -1471,10 +1447,10 @@ Taken together, we view our results as consistent with the growing view of inter
 
 
 
-![**Figure**. Effects of conversation type (affiliative/argumentative), condition (dual-task/noise), and lag (±5 seconds at 10Hz) on RR. Baseline values (obtained through sample-wise shuffled surrogate analysis) plotted in dashed lines of the appropriate color.](./figures/DCC-interaction-RR_lag_conversation_condition-knitr.png)
+![**Figure**. Effects of conversation type (affiliative/argumentative), condition (dual-task/noise), and lag (±5 seconds) on RR.](./figures/DCC-interaction-RR_lag_conversation_condition-knitr.png)
 
 ***
 
 
 
-![**Figure**. Individual profiles for each dyad's RR by conversation type (affiliative/argumentative), condition (dual-task/noise), and lag (±5 seconds at 10 Hz).](./figures/DCC-all_dyad_profiles-knitr.png)
+![**Figure**. Individual profiles for each dyad's RR by conversation type (affiliative/argumentative), condition (dual-task/noise), and lag (±5 seconds).](./figures/DCC-all_dyad_profiles-knitr.png)
