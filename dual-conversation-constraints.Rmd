@@ -1,12 +1,12 @@
 ---
-title: "High- and Low-Level Constraints on Coordination during Conversation: Code for Paxton & Dale (under review)"
-output:
+title: "High- and Low-Level Constraints on Coordination during Conversation: Code for Paxton & Dale (accepted, Fontiers in Psychology)"
+output: 
   html_document:
     number_sections: true
     keep_md: true
 ---
 
-This R markdown provides the basis for our manuscript, "Interpersonal movement synchrony responds to high- and low-level conversational constraints" (Paxton & Dale, under review). The study explores how high-level (i.e., conversational context) and low-level (i.e., visual stimuli) constraints affect interpersonal synchrony during conversation. We quantify coordination using amplitude of movement from head-mounted accelerometers (using Google Glass; see Paxton, Rodriguez, & Dale, 2015, *Behavior Research Methods*).
+This R markdown provides the basis for our manuscript, "Interpersonal movement synchrony responds to high- and low-level conversational constraints" (Paxton & Dale, *accepted*, *Frontiers in Psychology*). The study explores how high-level (i.e., conversational context) and low-level (i.e., visual stimuli) constraints affect interpersonal synchrony during conversation. We quantify coordination using amplitude of movement from head-mounted accelerometers (using Google Glass; see Paxton, Rodriguez, & Dale, 2015, *Behavior Research Methods*).
 
 To run these analyses from scratch, you will need the following files:
 
@@ -18,7 +18,7 @@ To run these analyses from scratch, you will need the following files:
 Additional files will be created during the initial run that will help reduce processing time. Several of these files--including the chosen CRQA parameters, the final plotting dataframe, and the final analysis dataframe---are available as CSVs from the OSF repository listed above.
 
 **Written by**: A. Paxton (University of California, Berkeley) and R. Dale (University of California, Merced)
-<br>**Date last modified**: 14 June 2017
+<br>**Date last modified**: 1 July 2017
 
 ***
 
@@ -84,18 +84,18 @@ coords = coords %>% ungroup() %>%
   mutate(euclid_accel = signal::filtfilt(post_downsample_butter, euclid_accel)) # filter
 
 # isolate participants' time series within each dyad
-p0 = coords %>% ungroup() %>%
-  dplyr::filter(partic == 0) %>%
+p0 = coords %>% ungroup() %>% 
+  dplyr::filter(partic == 0) %>% 
   select(-partic) %>%
   dplyr::rename(euclid0 = euclid_accel)
-p1 = coords %>% ungroup() %>%
-  dplyr::filter(partic == 1) %>%
+p1 = coords %>% ungroup() %>% 
+  dplyr::filter(partic == 1) %>% 
   select(-partic) %>%
   dplyr::rename(euclid1 = euclid_accel)
 
 # join together the participants' time series, leaving only any overlapping slices
-coords = plyr::join(p0, p1,
-                    by=c("dyad", "conv.num", "conv.type", "cond", "t"),
+coords = plyr::join(p0, p1, 
+                    by=c("dyad", "conv.num", "conv.type", "cond", "t"), 
                     type="inner")
 
 ```
@@ -158,7 +158,7 @@ cutoff.points.jounce = coords.deriv %>% ungroup() %>%
 
 ```
 
-```{r invisible-store-jounce-and-jerk-values-for-table, eval=FALSE, echo=FALSE}
+```{r invisible-store-jounce-and-jerk-values-for-table, echo=FALSE, eval = FALSE}
 
 # invisible chunk: save file so that we can get the output without having to run everything
 write.table(cutoff.points.jounce,'./data/DCC-cutoff_jounce.csv', sep=',',
@@ -177,7 +177,7 @@ cutoff.points.jerk = read.table('./data/DCC-cutoff_jerk.csv', sep=',', header = 
 
 ```
 
-```{r check-correlation-between-measures, eval=TRUE}
+```{r check-correlation-between-measures, eval = TRUE}
 
 # are they correlated?
 pander::pander(cor.test(cutoff.points.jounce$t,cutoff.points.jerk$t),
@@ -188,7 +188,7 @@ pander::pander(cor.test(cutoff.points.jounce$t,cutoff.points.jerk$t),
 ```{r plot-jounce-and-jerk, echo=FALSE, fig.width=3, fig.height=3, fig.align='center', eval = FALSE}
 
 # create the plot
-jounce.v.jerk = qplot(x = cutoff.points.jounce$t,
+jounce.v.jerk = qplot(x = cutoff.points.jounce$t, 
                       y = cutoff.points.jerk$t) +
   xlab('Jounce') + ylab('Jerk') +
   ggtitle('Relation of Jerk and Jounce') +
@@ -227,12 +227,12 @@ if( conservative_jerk >= conservative_jounce ){
 
 # merge with the rest of the dataframe, trim instruction period, drop unneded variables, and filter
 coords.trimmed = coords.deriv %>% ungroup() %>%
-  merge(., cutoff.points,
+  merge(., cutoff.points, 
         by = c('dyad','conv.num','conv.type','cond')) %>%
   group_by(dyad, conv.num, conv.type, cond) %>%
   dplyr::filter(t > unique(cutoff.t)) %>%
-  select(-one_of('cutoff.t','cutoff'),
-         -matches('jerk'),
+  select(-one_of('cutoff.t','cutoff'), 
+         -matches('jerk'), 
          -matches('jounce'))
 
 ```
@@ -252,9 +252,7 @@ write.table(coords.trimmed,'./data/DCC-trimmed-data.csv', sep=',',
 
 ## Summary statistics on conversation lengths
 
-What do the final data look like (after trimming the calibration period)?
-
-```{r invisible-load-trimmed-for-stats, echo=FALSE}
+```{r invisible-load-trimmed-for-stats, echo = FALSE}
 
 # invisible chunk: load in the conversation data to correctly display table if everything else is `eval=FALSE`
 coords.trimmed = read.table('./data/DCC-trimmed-data.csv', sep=',',header=TRUE)
@@ -262,7 +260,7 @@ coords.trimmed = read.table('./data/DCC-trimmed-data.csv', sep=',',header=TRUE)
 ```
 
 
-```{r summary-conv-stats}
+```{r summary-conv-stats, eval = TRUE}
 
 # identify the maximum time for each dyad
 interaction.time = coords.trimmed %>%
@@ -350,8 +348,6 @@ source('./supplementary-code/continuous_rqa_parameters-DCC.r')
 
 ## Prepare for CRQA and DRPs
 
-Here we join the CRQA parameters identified above to the existing movement dataframe.
-
 ```{r ready-for-crqa-drps, eval = FALSE}
 
 # read in our chosen parameters
@@ -385,7 +381,7 @@ split_convs = split(coords_crqa,
 
 ## Run CRQA and DRPs
 
-Now that we have our parameters, we run continuous CRQA over each conversation for each dyad using the `crqa` function from the `crqa` package (Coco & Dale, 2014, *Frontiers in Psychology*). This produces output that can be useful for tracking progress, but we suppress these messages for brevity.
+Now that we have our parameters, we run continuous CRQA over each conversation for each dyad using the `crqa` function from the `crqa` package (Coco & Dale, 2014, *Frontiers in Psychology*).
 
 ```{r run-crqa-using-parameters, eval = FALSE}
 
@@ -397,31 +393,31 @@ win_size = target_seconds * sampling_rate
 drp_results = data.frame()
 crqa_results = data.frame()
 for (next_conv in split_convs){
-
+  
   # isolate parameters for this next dyad
   chosen.delay = unique(next_conv$chosen.delay)
   chosen.embed = unique(next_conv$chosen.embed)
   chosen.radius = unique(next_conv$chosen.radius)
-
+  
   # # print update
   # print(paste("CRQA: Dyad ", unique(next_conv$dyad),
   #             ", conversation ",unique(next_conv$conv.num),
   #             sep=""))
-
+  
   # run cross-recurrence
   rec_analysis = crqa(ts1=next_conv$rescale.euclid0,
                       ts2=next_conv$rescale.euclid1,
                       delay=chosen.delay,
                       embed=chosen.embed,
                       r=chosen.radius,
-                      normalize=0,
-                      rescale=0,
+                      normalize=0, 
+                      rescale=0, 
                       mindiagline=2,
-                      minvertline=2,
-                      tw=0,
+                      minvertline=2, 
+                      tw=0, 
                       whiteline=FALSE,
                       recpt=FALSE)
-
+  
   # save plot-level information to dataframe
   dyad_num = unique(next_conv$dyad)
   next_data_line = data.frame(c(dyad_num,
@@ -627,8 +623,8 @@ rec_convers_condition_gca_st = lmer(rr ~ convers + condition + ot1 + ot2 +
                                        convers.ot1 + condition.ot1 + condition.convers.ot1 +
                                        convers.ot2 + condition.ot2 + condition.convers.ot2 +
                                        convers.ot1.ot2 + condition.ot1.ot2 + condition.convers.ot1.ot2 +
-                                       (1 + ot1 + ot2 + convers + condition.convers.ot1 | conv.num) +
-                                       (1 + ot1 + ot2 + convers + condition.convers.ot1 | dyad),
+                                       (1 + ot1 + ot2 + convers + condition.convers.ot1 | conv.num) + 
+                                       (1 + ot1 + ot2 + convers + condition.convers.ot1 | dyad), 
                                     data=rec_st, REML=FALSE)
 invisible(pander_lme_to_latex(rec_convers_condition_gca_st,'standardized_model_latex-DCC.tex'))
 pander_lme(rec_convers_condition_gca_st,stats.caption = TRUE)
@@ -684,20 +680,20 @@ pander_anova(anova(rec_convers_condition_gca_raw_rio,rec_convers_condition_gca_r
 
 ```
 
-```{r plot-standardized-residuals, echo=FALSE, eval = FALSE}
+```{r plot-standardized-residuals, echo = FALSE, eval = FALSE}
 
 # plot residuals for random-intercepts-only model
-rio_residuals = qplot(x = fitted(rec_convers_condition_gca_st_rio),
+rio_residuals = qplot(x = fitted(rec_convers_condition_gca_st_rio), 
                       y = resid(rec_convers_condition_gca_st_rio)) +
-  geom_hline(aes(yintercept=0)) + geom_smooth() +
+  geom_hline(aes(yintercept=0)) + geom_smooth() + 
   scale_color_viridis() +
   coord_cartesian(xlim = c(-4,4), ylim = c(-2,3)) +
   ylab('Residuals') + xlab('Fitted') + ggtitle('Random-Intercepts-Only')
 
 # plot residuals for maximal model
-max_residuals = qplot(x = fitted(rec_convers_condition_gca_st),
+max_residuals = qplot(x = fitted(rec_convers_condition_gca_st), 
                       y = resid(rec_convers_condition_gca_st)) +
-  geom_hline(aes(yintercept=0)) + geom_smooth() +
+  geom_hline(aes(yintercept=0)) + geom_smooth() + 
   coord_cartesian(xlim = c(-4,4), ylim = c(-2,3)) +
   ylab('Residuals') + xlab('Fitted') + ggtitle('Maximal')
 
@@ -716,7 +712,7 @@ ggsave('./figures/DCC-standardized_residuals_plot.png',
 
 ![**Figure**. Residuals plots using standardized dataset. Residuals are more evenly distributed around 0 for the maximal model (right) than the random-intercepts-only model (left), meeting the assumption of homogeneity of residuals.](./figures/DCC-standardized_residuals_plot.png)
 
-```{r hist-standardized-residuals, echo=FALSE, eval = FALSE}
+```{r hist-standardized-residuals, echo = FALSE, eval = FALSE}
 
 # set bin width
 bin_width = .1
@@ -728,17 +724,17 @@ rio_residuals = qplot(resid(rec_convers_condition_gca_st_rio),
   geom_histogram(aes(fill = ..density..),binwidth=bin_width) +
   ylab('Frequency') + xlab('Residuals') +
   scale_fill_viridis(discrete=FALSE,name='Density') +
-  coord_cartesian(xlim = c(-3,3), ylim = c(0,y_max)) +
+  coord_cartesian(xlim = c(-3,3), ylim = c(0,y_max)) + 
   theme(legend.position='bottom') +
   ggtitle('Random-Intercepts-Only')
-
+ 
 # plot histogram of residuals maximal model
 max_residuals = qplot(resid(rec_convers_condition_gca_st),
                       geom='histogram',binwidth=bin_width) +
   geom_histogram(aes(fill = ..density..),binwidth=bin_width) +
   ylab('Frequency') + xlab('Residuals') +
   scale_fill_viridis(discrete=FALSE,name='Density') +
-  coord_cartesian(xlim = c(-3,3), ylim = c(0,y_max)) +
+  coord_cartesian(xlim = c(-3,3), ylim = c(0,y_max)) + 
   theme(legend.position='bottom') +
   ggtitle('Maximal')
 
@@ -845,7 +841,7 @@ pander_lme(cond_arg_gca_st, stats.caption=TRUE)
 
 ***
 
-# Surrogate analysis
+# Surrogate analysis: Phase-radomized baseline
 
 To explore how these patterns differ from the amount of coordination that might be expected by chance, we here re-create the above models with a deconstructed time series.
 
@@ -874,7 +870,7 @@ crqa_params = read.table('./data/crqa_data_and_parameters-DCC.csv',
 
 ***
 
-### Load CRQA parameters
+### Load CRQA parameters and specify chunks
 
 Load in the CRQA parameters specified for the real data and prepare the dataset for analysis.
 
@@ -928,6 +924,11 @@ for (next_conv in split_convs){
   chosen.radius = unique(next_conv$chosen.radius)
   dyad_num = unique(next_conv$dyad)
 
+  # # print update
+  # print(paste("Surrogate CRQA: Dyad ", unique(next_conv$dyad),
+  #             ", conversation ",unique(next_conv$conv.num),
+  #             sep=""))
+  
   # re-create the surrogate dyad and run again
   for (run in 1:10){
 
@@ -1012,7 +1013,7 @@ surrogate_recurrence_df = left_join(surrogate_recurrence_df,lag_vals, by = c("la
                c("conv.type"="convers",
                  "cond"="condition")) %>%
   mutate(condition = condition-.5) %>%
-  mutate(convers = convers-.5)
+  mutate(convers = convers-.5) 
 
 ```
 
@@ -1029,7 +1030,7 @@ write.table(surrogate_recurrence_df,'./data/surrogate_plotting_df-DCC.csv',row.n
 
 ***
 
-## Surrogate data analysis
+## Surrogate data analysis: Phase-randomized baseline
 
 ***
 
@@ -1051,7 +1052,7 @@ rec_plot = read.table('./data/plotting_df-DCC.csv',sep=',',header=TRUE)
 
 ***
 
-### Combine real and surrogate data for analysis dataframes
+### Combine real and surrogate data for analysis dataframes 
 
 We combine the real data (loaded as `rec_plot`) and the surrogate data (loaded as `surrogate_plot`) into a single dataframe for later analysis. We create a new variable called `data`, which designates whether the data were real (`data = .5`) or phase-randomized baseline (`data = -.5`). We then create all relevant interaction terms and create a standardized dataframe.
 
@@ -1061,8 +1062,32 @@ We combine the real data (loaded as `rec_plot`) and the surrogate data (loaded a
 rec_plot$data = .5
 surrogate_plot$data = -.5
 
+# specify interaction terms for surrogate data
+surrogate_plot = surrogate_plot %>% ungroup() %>%
+  mutate(condition.convers = condition * convers) %>%
+
+  # first-order polynomials
+  mutate(condition.ot1 = condition * ot1) %>%
+  mutate(convers.ot1 = convers * ot1) %>%
+  mutate(condition.convers.ot1 = condition * convers * ot1) %>%
+
+  # second-order polynomials
+  mutate(condition.ot2 = condition * ot2) %>%
+  mutate(convers.ot2 = convers * ot2) %>%
+  mutate(condition.convers.ot2 = condition * convers * ot2) %>%
+
+  # polynomial interactions
+  mutate(ot1.ot2 = ot1 * ot2) %>%
+  mutate(condition.ot1.ot2 = condition * ot1 * ot2) %>%
+  mutate(convers.ot1.ot2 = convers * ot1 * ot2) %>%
+  mutate(condition.convers.ot1.ot2 = condition * convers * ot1 * ot2)
+
+# specify variables we'd like to keep
+shared_variables = names(rec_plot)[names(rec_plot) %in% names(surrogate_plot)]
+
 # append the two time series
-all_data_plot = rbind.data.frame(rec_plot,dplyr::select(surrogate_plot,-run))
+all_data_plot = rbind.data.frame(dplyr::select(rec_plot,one_of(shared_variables)),
+                                 dplyr::select(surrogate_plot,one_of(shared_variables)))
 
 # create interaction terms
 all_data_plot = all_data_plot %>% ungroup() %>%
@@ -1296,17 +1321,493 @@ pander_lme(arg_posthoc_comparison_raw,stats.caption=TRUE)
 
 ***
 
+# Surrogate analysis: Sample-wise shuffled baseline
+
+Our manuscript uses the phase-randomized baseline (given above) as its surrogate analysis, which is able to preserve the autocorrelation of a time series while breaking its local dependencies. We here also present the sample-wise shuffled baseline, a common way of identifying the amount of interpersonal synchrony that might be expected by chance between individuals' time series by independently randomizing the order of all samples within the time series. Because the phase-randomized baseline is used in this research area less often than the sample-wise shuffled baseline, we present both here to demonstrate the robustness of our results against both kinds of baselines.
+
+***
+
+## Surrogate data preparation
+
+***
+
+### Preliminaries
+
+This section clears the workspace and reads in the prepared data files.
+
+```{r shuffled-prep-prelim, warning=FALSE, error=FALSE, message=FALSE, eval = FALSE}
+
+# clear our workspace
+rm(list=ls())
+
+# read in libraries and create functions
+source('./supplementary-code/libraries_and_functions-DCC.r')
+
+# load real data and CRQA parameters
+coords = read.table('./data/DCC-trimmed-data.csv', sep=',', header = TRUE)
+crqa_params = read.table('./data/crqa_data_and_parameters-DCC.csv',
+                         sep=',',header=TRUE)
+
+```
+
+***
+
+### Load CRQA parameters
+
+Let's load in the CRQA parameters specified for the real data and prepare for CRQA.
+
+```{r shuffled-prep-for-crqa-drps, eval = FALSE}
+
+# grab only the parameters we need
+crqa_params = crqa_params %>%
+  select(-matches('euclid')) %>%
+  distinct()
+
+# rescale the data (by mean)
+coords_crqa = coords %>% ungroup() %>%
+  group_by(dyad,conv.num) %>%
+  mutate(rescale.euclid0 = euclid0/mean(euclid0)) %>%
+  mutate(rescale.euclid1 = euclid1/mean(euclid1)) %>%
+  select(-matches('jounce'))
+
+# merge with parameters
+coords_crqa = plyr::join(x = crqa_params,
+                         y = coords_crqa,
+                         by = c('dyad'='dyad',
+                                'conv.num'='conv.num'))
+
+# slice up the data so that we have one dataset per conversation
+split_convs = split(coords_crqa,
+                    list(coords_crqa$dyad, coords_crqa$conv.num))
+
+```
+
+***
+
+### Calculate CRQA and DRPs for surrogate data
+
+Just as with the real data, we run continuous CRQA over each conversation of each dyad with the selected parameters using the `crqa` function from the `crqa` package (Coco & Dale, 2014, *Frontiers in Psychology*). Again, this includes code to print out updates, but we suppress them for brevity.
+
+```{r shuffled-crqa-calculation, eval = FALSE}
+
+# identify window size and set seed (for reproducibility)
+target_seconds = 5
+win_size = target_seconds * sampling_rate
+set.seed(111)
+
+# cycle through each conversation using the sliced subsets
+drp_results = data.frame()
+crqa_results = data.frame()
+for (next_conv in split_convs){
+
+  # isolate parameters for next dyad
+  chosen.delay = unique(next_conv$chosen.delay)
+  chosen.embed = unique(next_conv$chosen.embed)
+  chosen.radius = unique(next_conv$chosen.radius)
+  dyad_num = unique(next_conv$dyad)
+
+  # # print update
+  # print(paste("Surrogate CRQA: Dyad ", unique(next_conv$dyad),
+  #             ", conversation ",unique(next_conv$conv.num),
+  #             sep=""))
+
+  # re-shuffle the surrogate dyad and run again
+  for (run in 1:10){
+
+    # shuffle time series
+    shuffle0 = base::sample(next_conv$rescale.euclid0,replace=FALSE)
+    shuffle1 = base::sample(next_conv$rescale.euclid1,replace=FALSE)
+    
+    # run cross-recurrence
+    rec_analysis = crqa(ts1=shuffle0,
+                        ts2=shuffle1,
+                        delay=chosen.delay,
+                        embed=chosen.embed,
+                        r=chosen.radius,
+                        normalize=0,
+                        rescale=0,
+                        mindiagline=2,
+                        minvertline=2,
+                        tw=0,
+                        whiteline=FALSE,
+                        recpt=FALSE)
+
+    # save plot-level information to dataframe
+    next_data_line = data.frame(c(run,
+                                  dyad_num,
+                                  unique(next_conv$conv.type),
+                                  rec_analysis[1:9]))
+    names(next_data_line) = c('run',"dyad",'conv.type',names(rec_analysis[1:9]))
+    crqa_results = rbind.data.frame(crqa_results,next_data_line)
+
+    # recreate DRP from diagonal lines within our target window
+    diag_lines = spdiags(rec_analysis$RP)
+    subset_plot = data.frame(diag_lines$B[,diag_lines$d >= -win_size & diag_lines$d <= win_size])
+    rr = colSums(subset_plot)/dim(subset_plot)[1]
+
+    # convert to dataframe, padding (with 0) where no RR was observed
+    next_drp = full_join(data.frame(lag = as.integer(stringr::str_replace(names(rr),'X',''))-(win_size+1),
+                                    rr = rr),
+                         data.frame(lag = -win_size:win_size),
+                         by='lag')
+    next_drp[is.na(next_drp)] = 0
+
+    # save it to dataframe
+    next_drp$dyad = dyad_num
+    next_drp$conv.type = unique(next_conv$conv.type)
+    next_drp$run = run
+    drp_results = rbind.data.frame(drp_results,next_drp)
+  }}
+
+# merge CRQA and DRP analysis results
+recurrence_results = plyr::join(drp_results, crqa_results,
+                                by=c('dyad',
+                                     'conv.type',
+                                     'run'))
+
+# grab information about experiment condition
+additional_dyad_info = coords %>% ungroup() %>%
+  select(dyad,conv.num,conv.type,cond) %>% distinct()
+
+# merge recurrence analyses and condition information
+surrogate_recurrence_df = plyr::join(recurrence_results, additional_dyad_info,
+           by=c('dyad','conv.type'))
+
+```
+
+***
+
+### Create polynomials for surrogate data and center variables
+
+As with the real data, we create first- and second-order orthogonal polynomials for the lag term. 
+
+```{r shuffled-polynomials, eval = FALSE}
+
+# create first- and second-order orthogonal polynomials for lag
+raw_lag = min(surrogate_recurrence_df$lag):max(surrogate_recurrence_df$lag)
+lag_vals = data.frame(raw_lag)
+lag_offset = (0-min(raw_lag)) + 1
+t = stats::poly((raw_lag + lag_offset), 2)
+lag_vals[, paste("ot", 1:2, sep="")] = t[lag_vals$raw_lag + lag_offset, 1:2]
+
+# join it to the original data table
+surrogate_recurrence_df = left_join(surrogate_recurrence_df,lag_vals, by = c("lag" = "raw_lag"))
+
+# rename variables and center the binary variables
+surrogate_recurrence_df = surrogate_recurrence_df %>% ungroup() %>%
+  plyr::rename(.,
+               c("conv.type"="convers",
+                 "cond"="condition")) %>%
+  mutate(condition = condition-.5) %>%
+  mutate(convers = convers-.5) %>%
+  mutate(condition.convers = condition * convers)
+
+```
+
+***
+
+### Export surrogate dataframe
+
+```{r export-shuffled-dfs, eval = FALSE}
+
+# export plotting dataframe
+write.table(surrogate_recurrence_df,'./data/surrogate_shuffled_plotting_df-DCC.csv',
+            row.names=FALSE,sep=',')
+
+```
+
+***
+
+## Surrogate data analysis: Sample-wise shuffled baseline
+
+***
+
+### Preliminaries
+
+```{r shuffled-surrogate-analysis-prelim, warning=FALSE, error=FALSE, message=FALSE}
+
+# clear our workspace
+rm(list=ls())
+
+# read in libraries and create functions
+source('./supplementary-code/libraries_and_functions-DCC.r')
+
+# read in the raw datasets for real and baseline data
+surrogate_plot = read.table('./data/surrogate_shuffled_plotting_df-DCC.csv', 
+                            sep=',', header = TRUE)
+rec_plot = read.table('./data/plotting_df-DCC.csv',sep=',',header=TRUE)
+
+```
+
+***
+
+### Create unified dataframe and appropriate interactions
+
+Now that we've created the surrogate dataset, we join it to the real dataset so that we can compare our observed data to what might be expected by chance. We create a new variable `data` to mark whether the row contains real (`data = .5`) or surrogate (`data = -.5`) data and interact it appropriately with other predictors. We then create a standardized dataframe.
+
+```{r shuffled-analysis-prelim, warning=FALSE, error=FALSE, message=FALSE}
+
+# label real and surrogate data
+rec_plot$data = .5
+surrogate_plot$data = -.5
+
+# specify interaction terms for surrogate data
+surrogate_plot = surrogate_plot %>% ungroup() %>%
+  mutate(condition.convers = condition * convers) %>%
+
+  # first-order polynomials
+  mutate(condition.ot1 = condition * ot1) %>%
+  mutate(convers.ot1 = convers * ot1) %>%
+  mutate(condition.convers.ot1 = condition * convers * ot1) %>%
+
+  # second-order polynomials
+  mutate(condition.ot2 = condition * ot2) %>%
+  mutate(convers.ot2 = convers * ot2) %>%
+  mutate(condition.convers.ot2 = condition * convers * ot2) %>%
+
+  # polynomial interactions
+  mutate(ot1.ot2 = ot1 * ot2) %>%
+  mutate(condition.ot1.ot2 = condition * ot1 * ot2) %>%
+  mutate(convers.ot1.ot2 = convers * ot1 * ot2) %>%
+  mutate(condition.convers.ot1.ot2 = condition * convers * ot1 * ot2)
+
+# specify variables we'd like to keep
+shared_variables = names(rec_plot)[names(rec_plot) %in% names(surrogate_plot)]
+
+# append the two time series
+all_data_plot = rbind.data.frame(dplyr::select(rec_plot,one_of(shared_variables)),
+                                 dplyr::select(surrogate_plot,one_of(shared_variables)))
+
+# create interaction terms
+all_data_plot = all_data_plot %>% ungroup() %>%
+  mutate(data.convers = data * convers) %>%
+  mutate(data.condition = data * condition) %>%
+  mutate(data.condition.convers = data * condition * convers) %>%
+
+  # first-order polynomials
+  mutate(data.ot1 = data * ot1) %>%
+  mutate(data.condition.ot1 = data * condition * ot1) %>%
+  mutate(data.convers.ot1 = data * convers * ot1) %>%
+  mutate(data.condition.convers.ot1 = data * condition * convers * ot1) %>%
+
+  # second-order polynomials
+  mutate(data.ot2 = data * ot2) %>%
+  mutate(data.condition.ot2 = data * condition * ot2) %>%
+  mutate(data.convers.ot2 = data * convers * ot2) %>%
+  mutate(data.condition.convers.ot2 = data * condition * convers * ot2) %>%
+
+  # polynomial interactions
+  mutate(data.ot1.ot2 = data * ot1 * ot2) %>%
+  mutate(data.condition.ot1.ot2 = data * condition * ot1 * ot2) %>%
+  mutate(data.convers.ot1.ot2 = data * convers * ot1 * ot2) %>%
+  mutate(data.condition.convers.ot1.ot2 = data * condition * convers * ot1 * ot2)
+
+# create standardized dataframe
+all_data_st = mutate_each(all_data_plot,funs(as.numeric(scale(.))))
+
+```
+
+***
+
+### Comparing model to baseline
+
+After analyzing the dynamics of the observed data (Section 4), we now explore how those dynamics differ from those we might expect to see by chance. The models below add `data` as an additional predictor (with all appropriate interactions) and use the most maximal random effects structure justified by the data.
+
+```{r compare-shuffle-to-baseline, warning=FALSE, error=FALSE, message=FALSE}
+
+# standardized model
+shuffled_baseline_comparison_st = lmer(rr ~ data + convers + condition + ot1 + ot2
+                              + data.ot1
+                              + data.ot2
+                              + condition.convers
+                              + data.convers
+                              + data.condition
+                              + data.condition.convers
+                              + condition.ot1
+                              + data.condition.ot1
+                              + convers.ot1
+                              + data.convers.ot1
+                              + condition.convers.ot1
+                              + data.condition.convers.ot1
+                              + condition.ot2
+                              + data.condition.ot2
+                              + convers.ot2
+                              + data.convers.ot2
+                              + condition.convers.ot2
+                              + data.condition.convers.ot2
+                              + ot1.ot2
+                              + data.ot1.ot2
+                              + condition.ot1.ot2
+                              + data.condition.ot1.ot2
+                              + convers.ot1.ot2
+                              + data.convers.ot1.ot2
+                              + condition.convers.ot1.ot2
+                              + data.condition.convers.ot1.ot2
+                              + (1 + convers | conv.num)
+                              + (1 + convers + data.ot2 + data.convers | dyad),
+                              data = all_data_st,
+                              REML = FALSE)
+pander_lme(shuffled_baseline_comparison_st,stats.caption=TRUE)
+
+# raw model
+shuffled_baseline_comparison_raw = lmer(rr ~ data + convers + condition + ot1 + ot2
+                              + data.ot1
+                              + data.ot2
+                              + condition.convers
+                              + data.convers
+                              + data.condition
+                              + data.condition.convers
+                              + condition.ot1
+                              + data.condition.ot1
+                              + convers.ot1
+                              + data.convers.ot1
+                              + condition.convers.ot1
+                              + data.condition.convers.ot1
+                              + condition.ot2
+                              + data.condition.ot2
+                              + convers.ot2
+                              + data.convers.ot2
+                              + condition.convers.ot2
+                              + data.condition.convers.ot2
+                              + ot1.ot2
+                              + data.ot1.ot2
+                              + condition.ot1.ot2
+                              + data.condition.ot1.ot2
+                              + convers.ot1.ot2
+                              + data.convers.ot1.ot2
+                              + condition.convers.ot1.ot2
+                              + data.condition.convers.ot1.ot2
+                              + (1 + convers | conv.num)
+                              + (1 + convers + data.ot2 + data.convers | dyad),
+                              data = all_data_plot,
+                              REML = FALSE)
+pander_lme(shuffled_baseline_comparison_raw,stats.caption=TRUE)
+
+```
+
+***
+
+### Exploring interaction terms
+
+***
+
+#### Prepare separate datasets for comparison
+
+```{r prep-shuffle-post-hoc-datasets}
+
+# select only the friendly conversations (convers = -.5)
+aff_only_raw = all_data_plot %>%
+  dplyr::filter(convers < 0)
+
+# restandardize friendly conversation data
+aff_only_st = aff_only_raw %>%
+  mutate_each(.,funs(as.numeric(scale(.)))) %>%
+  mutate(convers = -.5)
+
+# select only the arguments (convers = .5)
+arg_only_raw = all_data_plot %>%
+  dplyr::filter(convers > 0)
+
+# restandardize argument data
+arg_only_st = arg_only_raw %>%
+  mutate_each(.,funs(as.numeric(scale(.)))) %>%
+  mutate(convers = .5)
+
+```
+
+***
+
+#### Post-hoc interaction tests
+
+As with the real data, we next examine the interactions by separately analyzing the friendly and argumentative conversations, still including the `data` predictor to compare observed to baseline.
+
+```{r shuffled-aff-posthoc-comparison-test}
+
+# check for differences in the friendly conversation (standardized)
+shuffled_aff_posthoc_comparison_st = lmer(rr ~ data + condition + ot1 + ot2
+                              + data.ot1 + data.ot2 + data.condition
+                              + condition.ot1 + condition.ot2 + data.condition.ot1 
+                              + data.condition.ot2 + ot1.ot2 + data.ot1.ot2
+                              + condition.ot1.ot2 + data.condition.ot1.ot2
+                              + (1 | conv.num)
+                              + (1 + ot1 + data + condition + data.ot2 + data.condition | dyad),
+                              data = aff_only_st,
+                              REML = FALSE)
+pander_lme(shuffled_aff_posthoc_comparison_st,stats.caption=TRUE)
+
+# check for differences in the friendly conversation (raw)
+shuffled_aff_posthoc_comparison_raw = lmer(rr ~ data + condition + ot1 + ot2
+                              + data.ot1 + data.ot2 + data.condition
+                              + condition.ot1 + condition.ot2 + data.condition.ot1 
+                              + data.condition.ot2 + ot1.ot2 + data.ot1.ot2
+                              + condition.ot1.ot2 + data.condition.ot1.ot2
+                              + (1 | conv.num)
+                              + (1 + ot1 + data + condition + data.ot2 + data.condition | dyad),
+                              data = aff_only_raw,
+                              REML = FALSE)
+pander_lme(shuffled_aff_posthoc_comparison_raw,stats.caption=TRUE)
+
+```
+
+```{r shuffled-arg-posthoc-comparison-test}
+
+# check for differences in the argumentative conversation (standardized)
+shuffled_arg_posthoc_comparison_st = lmer(rr ~ data + condition + ot1 + ot2
+                              + data.ot1
+                              + data.ot2
+                              + data.condition
+                              + condition.ot1
+                              + data.condition.ot1
+                              + condition.ot2
+                              + data.condition.ot2
+                              + ot1.ot2
+                              + data.ot1.ot2
+                              + condition.ot1.ot2
+                              + data.condition.ot1.ot2
+                              + (1 + ot1 | conv.num)
+                              + (1 + ot1 + data + condition + ot2 | dyad),
+                              data = arg_only_st,
+                              REML = FALSE)
+pander_lme(shuffled_arg_posthoc_comparison_st,stats.caption=TRUE)
+
+# check for differences in the argumentative conversation (raw)
+shuffled_arg_posthoc_comparison_raw = lmer(rr ~ data + condition + ot1 + ot2
+                              + data.ot1
+                              + data.ot2
+                              + data.condition
+                              + condition.ot1
+                              + data.condition.ot1
+                              + condition.ot2
+                              + data.condition.ot2
+                              + ot1.ot2
+                              + data.ot1.ot2
+                              + condition.ot1.ot2
+                              + data.condition.ot1.ot2
+                              + (1 + ot1 | conv.num)
+                              + (1 + ot1 + data + condition + ot2 | dyad),
+                              data = arg_only_raw,
+                              REML = FALSE)
+pander_lme(shuffled_arg_posthoc_comparison_raw,stats.caption=TRUE)
+
+```
+
+***
+
 # Discussion
 
 The model's results indeed suggest that high- and low-level constraints influence coordination dynamics. Unexpectedly, we saw that participants did not exhibit time-locked head movement synchrony overall in the presence of these additional constraints on the interaction. Extending previous findings with gross body movements in another naturalistic interaction corpus (Paxton & Dale, 2013, *Quarterly Journal of Experimental Psychology*), we here found that argument decreases interpersonal synchrony.
 
-Interestingly, although we hypothesized that the noise condition would increase coordination compared to a dual-task condition, we did not find a simple effect of condition. Instead, condition affected the dynamics of coordination in a three-way interaction among conversation type, condition, and the quadratic term. In both conditions, affiliative conversations induced relatively flat coordination dynamics, although at a rate significanty higher than in arguments. In argument, however, we found very different dynamics by condition: We observed the U-shape characteristic of turn-taking dynamics in the dual-task condition but saw a relatively flat recurrence profile in the noise condition.
+Interestingly, although we hypothesized that the noise condition would increase coordination compared to a dual-task condition, we did not find a simple effect of condition. Instead, condition affected the dynamics of coordination in a three-way interaction among conversation type, condition, and the quadratic term. In both conditions, affiliative conversations induced relatively flat coordination dynamics, although at a rate significanty higher than in arguments. In argument, however, we found very different dynamics by condition: We observed the inverted U-shape characteristic of turn-taking dynamics in the dual-task condition but saw a relatively flat recurrence profile in the noise condition.
 
-Taken together, we view our results as consistent with the growing view of interpersonal communication as a complex dynamical system.
+Taken together, we view our results as consistent with the growing view of interpersonal communication as a complex dynamical system. 
 
 ***
 
 ```{r plot-three-way-interaction, echo=FALSE, warning = FALSE, error = FALSE, message = FALSE, eval = FALSE}
+
+# read in the raw datasets for real and baseline data
+surrogate_plot = read.table('./data/surrogate_plotting_df-DCC.csv', sep=',', header = TRUE)
+rec_plot = read.table('./data/plotting_df-DCC.csv',sep=',',header=TRUE)
 
 # split plotting dataframe by condition
 rec_plot$data = 'Real'
@@ -1332,7 +1833,7 @@ dual_task_plot = ggplot(real_dual_task_data,
   stat_smooth() +
   ggtitle('Dual-Task') +
   xlab(paste('Lag (',sampling_rate,' Hz)', sep="")) + ylab('Mean RR') +
-  coord_cartesian(ylim = c(0,
+  coord_cartesian(ylim = c(0, 
                            max(c(mean(real_noise_data$rr),mean(real_dual_task_data$rr)))+.03)) +
   geom_smooth(data = surrogate_dual_task_data,
             aes(x = lag,
@@ -1352,7 +1853,7 @@ noise_plot = ggplot(real_noise_data,
   ggtitle('Noise') +
   stat_smooth() +
   xlab(paste('Lag (',sampling_rate,' Hz)', sep="")) + ylab('') +
-  coord_cartesian(ylim = c(0,
+  coord_cartesian(ylim = c(0, 
                            max(c(mean(real_noise_data$rr),mean(real_dual_task_data$rr)))+.03)) +
   geom_smooth(data = surrogate_noise_data,
             aes(x = lag,
@@ -1372,7 +1873,7 @@ noise_plot_legend = ggplot(real_noise_data,
                       labels=c("Affiliative","Argumentative")) +
   ggtitle('Noise') +
   stat_smooth() +
-  coord_cartesian(ylim = c(0,
+  coord_cartesian(ylim = c(0, 
                            max(c(mean(real_noise_data$rr),mean(real_dual_task_data$rr)))+.03))
 
 # create a master legend
@@ -1417,6 +1918,7 @@ grid.arrange(
        )
 dev.off()
 
+
 ```
 
 ![**Figure**. Effects of conversation type (affiliative/argumentative), condition (dual-task/noise), and lag (±5 seconds) on RR.](./figures/DCC-interaction-RR_lag_conversation_condition-knitr.png)
@@ -1426,6 +1928,7 @@ dev.off()
 ```{r plot-all-drps, echo=FALSE, warning = FALSE, error = FALSE, message = FALSE, eval = FALSE}
 
 # split plotting dataframe by condition
+rec_plot = read.table('./data/plotting_df-DCC.csv',sep=',',header=TRUE)
 condition_dfs = split(rec_plot,rec_plot$condition)
 noise_data = condition_dfs[[1]]
 dual_task_data = condition_dfs[[2]]

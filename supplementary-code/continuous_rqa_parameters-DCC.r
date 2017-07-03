@@ -43,10 +43,10 @@ amis = coords %>% ungroup() %>%
   mutate(ami.selected = min(ami.loc1,ami.loc0))
 
 # write AMI information to file
-write.table(amis,'./data/ami_calculations-DCC.csv', sep=',',row.names=FALSE,col.names=TRUE)
+write.table(amis,'./data/crqa_parameters/ami_calculations-DCC.csv', sep=',',row.names=FALSE,col.names=TRUE)
 
 # if we've already run it, load it in
-amis = read.table('./data/ami_calculations-DCC.csv', sep=',',header=TRUE)
+amis = read.table('./data/crqa_parameters/ami_calculations-DCC.csv', sep=',',header=TRUE)
 
 # join the AMI information to our whole dataframe
 coords = join(coords,amis,by=c("dyad",'conv.type','conv.num'))
@@ -66,20 +66,20 @@ fnns = data.frame(dyad = numeric(),
 # cycle through both conversations for each dyad
 convo.dfs = split(coords,list(coords$dyad,coords$conv.type))
 for (conv.code in names(convo.dfs)){
-
+  
   # cycle through participants
   for (partic in 0:1){
-
-    # # print update
-    # print(paste("Beginning FNN calculations for P",partic," of Conversation ",conv.code,sep=""))
-
+    
+    # print update
+    print(paste("Beginning FNN calculations for P",partic," of Conversation ",conv.code,sep=""))
+    
     # grab next participant's data
     p.data = select(convo.dfs[[conv.code]],matches(paste("euclid",partic,sep="")))[,1]
     p.ami = unique(convo.dfs[[conv.code]]$ami.selected)
-
+    
     # only proceed if we have the dyad's data
     if (length(p.data) > 0) {
-
+      
       # calculate false nearest neighbors
       fnn = false.nearest(p.data,
                           m = fnnpercent,
@@ -89,7 +89,7 @@ for (conv.code in names(convo.dfs)){
                           eps = sd(p.data)/10)
       fnn = fnn[1,][complete.cases(fnn[1,])]
       threshold = fnn[1]/fnnpercent
-
+      
       # identify the largest dimension after a large drop
       embed.dim.index = as.numeric(which(diff(fnn) < -threshold)) + 1
       head.embed = head(embed.dim.index,1)
@@ -98,12 +98,12 @@ for (conv.code in names(convo.dfs)){
         head.embed = 1
         tail.embed = 1
       }
-
+      
       # identify conversation type and dyad number from information
       conv.info = unlist(strsplit(conv.code,'[.]'))
       dyad = as.integer(conv.info[1])
       conv.type = as.integer(conv.info[2])
-
+      
       # bind everything to data frame
       fnns = rbind.data.frame(fnns,
                               cbind.data.frame(dyad, 
@@ -111,8 +111,8 @@ for (conv.code in names(convo.dfs)){
                                                conv.type, 
                                                head.embed, 
                                                tail.embed))
-
-  }}}
+      
+    }}}
 
 # change table configuration so that we get participants' embedding dimensions as columns, not rows
 fnn.partic = split(fnns,fnns$partic)
@@ -128,10 +128,10 @@ fnn.merged = fnn.merged %>% ungroup() %>%
   mutate(embed.selected = max(c(embed.0,embed.1)))
 
 # save false nearest neighbor calculations to file
-write.table(fnn.merged,'./data/fnn_calculations-DCC.csv', sep=',',row.names=FALSE,col.names=TRUE)
+write.table(fnn.merged,'./data/crqa_parameters/fnn_calculations-DCC.csv', sep=',',row.names=FALSE,col.names=TRUE)
 
 # if we've already run it, load it in
-fnn.merged = read.table('./data/fnn_calculations-DCC.csv', sep=',',header=TRUE)
+fnn.merged = read.table('./data/crqa_parameters/fnn_calculations-DCC.csv', sep=',',header=TRUE)
 
 # merge with coords dataset
 coords = join(coords, fnn.merged, by = c("dyad","conv.type"))
@@ -178,10 +178,10 @@ for (next.conv in crqa.data){
         # keep the previous iteration's performance
         last.from.target = from.target
         
-        # # print update
-        # print(paste("Dyad ", unique(next.conv$dyad),
-        #             ", conversation ",unique(next.conv$conv.num),
-        #             ": radius ",chosen.radius,sep=""))
+        # print update
+        print(paste("Dyad ", unique(next.conv$dyad),
+                    ", conversation ",unique(next.conv$conv.num),
+                    ": radius ",chosen.radius,sep=""))
         
         # identify parameters
         chosen.delay = unique(next.conv$ami.selected)
@@ -218,7 +218,7 @@ for (next.conv in crqa.data){
                                      chosen.radius,
                                      rr,
                                      from.target),
-                    paste('./data/radius_calculations-mean_scaled-r',chosen.radius,'-',dyad,'_',conv.num,'-DCC.csv', sep=''), 
+                    paste('./data/crqa_parameters/radius_calculations-mean_scaled-r',chosen.radius,'-',dyad,'_',conv.num,'-DCC.csv', sep=''), 
                     sep=',',row.names=FALSE,col.names=TRUE)
         
         # append to dataframe
@@ -238,18 +238,18 @@ for (next.conv in crqa.data){
       }}}}
 
 # save the radius explorations to file
-write.table(radius_selection,'./data/radius_calculations-mean_scaled-DCC.csv', sep=',',row.names=FALSE,col.names=TRUE)
+write.table(radius_selection,'./data/crqa_parameters/radius_calculations-mean_scaled-DCC.csv', sep=',',row.names=FALSE,col.names=TRUE)
 
 # let us know when it's finished
 beepr::beep("fanfare")
 
 # if we've already run it, load it in
-radius_selection = read.table('./data/radius_calculations-mean_scaled-DCC.csv', sep=',',header=TRUE)
+radius_selection = read.table('./data/crqa_parameters/radius_calculations-mean_scaled-DCC.csv', sep=',',header=TRUE)
 
 #### 5. Expand radius where necessary ####
 
 # load back in the data
-radius_selection = read.table('./data/radius_calculations-mean_scaled-DCC.csv', sep=',',header=TRUE)
+radius_selection = read.table('./data/crqa_parameters/radius_calculations-mean_scaled-DCC.csv', sep=',',header=TRUE)
 radius_stats = radius_selection %>% ungroup() %>%
   group_by(dyad,conv.num) %>%
   dplyr::filter(from.target==min(from.target)) %>%
@@ -300,10 +300,10 @@ for (next.conv in recheck_radii){
         # keep the previous iteration's performance
         last.from.target = from.target
         
-        # # print update
-        # print(paste("Dyad ", unique(next.conv$dyad),
-        #             ", conversation ",unique(next.conv$conv.num),
-        #             ": radius ",chosen.radius,sep=""))
+        # print update
+        print(paste("Dyad ", unique(next.conv$dyad),
+                    ", conversation ",unique(next.conv$conv.num),
+                    ": radius ",chosen.radius,sep=""))
         
         # identify parameters
         chosen.delay = unique(next.conv$ami.selected)
@@ -340,7 +340,7 @@ for (next.conv in recheck_radii){
                                      chosen.radius,
                                      rr,
                                      from.target),
-                    paste('./data/radius_calculations-mean_scaled-r',chosen.radius,'-',dyad,'_',conv.num,'-DCC.csv', sep=''), 
+                    paste('./data/crqa_parameters/radius_calculations-mean_scaled-r',chosen.radius,'-',dyad,'_',conv.num,'-DCC.csv', sep=''), 
                     sep=',',row.names=FALSE,col.names=TRUE)
         
         # append to dataframe
@@ -360,18 +360,18 @@ for (next.conv in recheck_radii){
       }}}}
 
 # save the radius explorations to file
-write.table(recheck_radius_selection,'./data/radius_recheck_calculations-mean_scaled-DCC.csv', sep=',',row.names=FALSE,col.names=TRUE)
+write.table(recheck_radius_selection,'./data/crqa_parameters/radius_recheck_calculations-mean_scaled-DCC.csv', sep=',',row.names=FALSE,col.names=TRUE)
 
 # let us know when it's finished
 beepr::beep("fanfare")
 
 # if we've already run it, load it in
-recheck_radius_selection = read.table('./data/radius_recheck_calculations-mean_scaled-DCC.csv', sep=',',header=TRUE)
+recheck_radius_selection = read.table('./data/crqa_parameters/radius_recheck_calculations-mean_scaled-DCC.csv', sep=',',header=TRUE)
 
 #### 6. Export chosen radii for all conversations ####
 
 # load in files
-radius_files = list.files('./data', 
+radius_files = list.files('./data/crqa_parameters', 
                           pattern='radius_calculations-mean_scaled*',
                           full.names = TRUE)
 
