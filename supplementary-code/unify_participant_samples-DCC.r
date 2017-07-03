@@ -5,7 +5,7 @@
 # dataset is included) but is provided for the curious.
 #
 # Written by: A. Paxton (University of California, Berkeley)
-# Date last modified: 8 July 2016
+# Date last modified: 3 July 2017
 #
 #####################################################################################
 
@@ -28,7 +28,7 @@ coords = data.frame(dyad = integer(),
 ) 
 
 # identify all movement data files
-glass.files = list.files('./glass-data', full.names = TRUE, 
+glass.files = list.files('./data/raw_experiment_data-DCC', full.names = TRUE, 
                          pattern = "data[[:digit:]].txt$")
 
 # create a unified dataframe
