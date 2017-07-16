@@ -1,6 +1,6 @@
-# High- and Low-Level Constraints on Synchrony during Conversation: Code for Paxton & Dale (*accepted*, *Frontiers in Psychology*)
+# High- and Low-Level Constraints on Synchrony during Conversation: Code for Paxton & Dale (*in press*, *Frontiers in Psychology*)
 
-This repo contains the code for the analyses presented in our manuscript, "Interpersonal movement synchrony responds to high- and low-level conversational constraints" (Paxton & Dale, *accepted*, *Frontiers in Psychology*).
+This repo contains the code for the analyses presented in our manuscript, "Interpersonal movement synchrony responds to high- and low-level conversational constraints" (Paxton & Dale, *in press*, *Frontiers in Psychology*).
 
 ## Overview
 
@@ -15,7 +15,7 @@ The repo contains several analysis files, figures, an R markdown file, and a mar
 
 ## Related materials
 
-Data for the project can be found at our OSF repository: https://osf.io/x9ay6/
+Data for the project (as accepted by *Frontiers in Psychology*) can be found at our registered OSF project: https://osf.io/4yqz8/
 
 ## Notes on running and viewing
 
